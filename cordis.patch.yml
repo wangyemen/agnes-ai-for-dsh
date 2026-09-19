@@ -1,146 +1,21 @@
-# Agnes AI Plugin for DeepSeek Harness
-# Provides text, image, and video generation capabilities via Agnes AI API
+# Agnes AI Tools Plugin for DeepSeek Harness
+# Provides image/video generation and multimodal tools to the DSH agent
 #
-# Models are categorized into:
-#   1. Text Models (free/paid)
-#   2. Image Generation Models (free)
-#   3. Video Generation Models (free/paid)
+# This plugin adds TOOLS, not a new LLM provider.
+# The agent can use these tools to:
+# - Generate images (text-to-image, image-to-image)
+# - Generate videos (text-to-video, image-to-video)
+# - The existing LLM providers (DeepSeek, etc.) can already handle image understanding
 
 - insert:
-    # ============================================================================
-    # LLM Provider: Agnes AI Chat Completions (China)
-    # ============================================================================
-    - id: llm-agnes
-      name: '@deepseek-ai/dsh-llm-pi-ai'
-      config:
-        providers:
-          agnes:
-            displayName: 'Agnes AI'
-            apiKeyEnv: AGNES_API_KEY
-            api: openai-completions
-            baseURL: https://api.agnes-ai.cn/v1
-            models:
-              # ── Text Models (free) ───────────────────────────────────────
-              - id: agnes-2.5-flash
-                name: 'Agnes 2.5 Flash'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                reasoningEfforts:
-                  off:
-                  high: high
+    # Image Generation Tool
+    - id: tool-agnes-image
+      name: '@deepseek-ai/agnes-ai-tool-image'
 
-              - id: agnes-3.0-flash
-                name: 'Agnes 3.0 Flash'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                reasoningEfforts:
-                  off:
-                  high: high
+    # Video Generation Tool
+    - id: tool-agnes-video
+      name: '@deepseek-ai/agnes-ai-tool-video'
 
-              # ── Text Models (paid) ───────────────────────────────────────
-              - id: agnes-2.5-pro
-                name: 'Agnes 2.5 Pro'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                reasoningEfforts:
-                  off:
-                  high: high
-
-              - id: agnes-2.5-pro-beta
-                name: 'Agnes 2.5 Pro Beta'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                reasoningEfforts:
-                  off:
-                  high: high
-
-              # ── Image Models (free, no reasoning) ────────────────────────
-              - id: agnes-image-2.1-flash
-                name: 'Agnes Image 2.1 Flash'
-                reasoningEfforts: false
-
-              - id: agnes-image-2.5-flash
-                name: 'Agnes Image 2.5 Flash'
-                reasoningEfforts: false
-
-              # ── Video Models (free/paid, no reasoning) ───────────────────
-              - id: agnes-video-v2.0
-                name: 'Agnes Video V2.0'
-                reasoningEfforts: false
-
-              - id: agnes-video-25-flash
-                name: 'Agnes Video 2.5 Flash'
-                reasoningEfforts: false
-
-              - id: agnes-video-25
-                name: 'Agnes Video 2.5'
-                reasoningEfforts: false
-
-    # ============================================================================
-    # LLM Provider: Agnes AI Chat Completions (Global)
-    # ============================================================================
-    - id: llm-agnes-intl
-      name: '@deepseek-ai/dsh-llm-pi-ai'
-      config:
-        providers:
-          agnes-intl:
-            displayName: 'Agnes AI (Global)'
-            apiKeyEnv: AGNES_API_KEY
-            api: openai-completions
-            baseURL: https://apihub.agnes-ai.com/v1
-            models:
-              # ── Text Models (free) ───────────────────────────────────────
-              - id: agnes-2.5-flash
-                name: 'Agnes 2.5 Flash (Global)'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                reasoningEfforts:
-                  off:
-                  high: high
-
-              - id: agnes-3.0-flash
-                name: 'Agnes 3.0 Flash (Global)'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                reasoningEfforts:
-                  off:
-                  high: high
-
-              # ── Text Models (paid) ───────────────────────────────────────
-              - id: agnes-2.5-pro
-                name: 'Agnes 2.5 Pro (Global)'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                reasoningEfforts:
-                  off:
-                  high: high
-
-              - id: agnes-2.5-pro-beta
-                name: 'Agnes 2.5 Pro Beta (Global)'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                reasoningEfforts:
-                  off:
-                  high: high
-
-              # ── Image Models (free, no reasoning) ────────────────────────
-              - id: agnes-image-2.1-flash
-                name: 'Agnes Image 2.1 Flash (Global)'
-                reasoningEfforts: false
-
-              - id: agnes-image-2.5-flash
-                name: 'Agnes Image 2.5 Flash (Global)'
-                reasoningEfforts: false
-
-              # ── Video Models (free/paid, no reasoning) ───────────────────
-              - id: agnes-video-v2.0
-                name: 'Agnes Video V2.0 (Global)'
-                reasoningEfforts: false
-
-              - id: agnes-video-25-flash
-                name: 'Agnes Video 2.5 Flash (Global)'
-                reasoningEfforts: false
-
-              - id: agnes-video-25
-                name: 'Agnes Video 2.5 (Global)'
-                reasoningEfforts: false
+    # Main Plugin Package
+    - id: agnes-ai-tools
+      name: 'agnes-ai-for-dsh'

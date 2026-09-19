@@ -1,19 +1,19 @@
 /**
- * Agnes AI Plugin for DeepSeek Harness
- *
- * Integrates Agnes AI's text, image, and video generation capabilities
- * into the DeepSeek Harness platform.
- *
- * LLM provider configuration is handled by cordis.patch.yml.
- * This entry point registers the settings panel loader entry.
+ * Agnes AI Tools Plugin for DeepSeek Harness
+ * 
+ * This plugin adds tools for image and video generation to the DSH agent.
+ * The agent can use these tools to:
+ * - Generate images using Agnes AI models
+ * - Generate videos using Agnes AI models
+ * 
+ * Image understanding is handled by the existing LLM providers
+ * (DeepSeek vision, etc.)
  */
 
-import type { Context } from '@deepseek-ai/cordis'
+import { createTool } from '@deepseek-ai/cordis'
 
-export const name = 'agnes-ai-for-dsh'
+export const name = 'agnes-ai-tools'
 
-export const inject = ['settings', 'credentials'] as const
-
-export function apply(ctx: Context): void {
-  ctx.logger?.info?.(`[${name}] plugin loaded`)
+export function apply(ctx: any): void {
+  ctx.logger?.info?.(`[${name}] loading`)
 }
