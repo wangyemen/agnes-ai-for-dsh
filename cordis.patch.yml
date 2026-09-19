@@ -1,6 +1,9 @@
 # Agnes AI Plugin for DeepSeek Harness
 # Provides LLM provider integration with multimodal support
 # and image/video generation tools
+#
+# Note: Users can configure either China (api.agnes-ai.cn) or Global (apihub.agnes-ai.com) endpoint
+# by editing the baseURL in Settings → Models → Agnes AI provider
 
 - insert:
     # LLM Provider: Agnes AI (via pi-ai adapter)
@@ -12,6 +15,7 @@
             displayName: 'Agnes AI'
             apiKeyEnv: AGNES_API_KEY
             api: openai-completions
+            # Default to China endpoint; change to https://apihub.agnes-ai.com/v1 for global users
             baseURL: https://api.agnes-ai.cn/v1
             models:
               # Free text models with multimodal support

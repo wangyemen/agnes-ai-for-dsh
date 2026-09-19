@@ -63,7 +63,7 @@ Go to **Settings → Models** and add a new provider:
 - **Provider ID**: `agnes-ai`
 - **Display Name**: `Agnes AI`
 - **API**: `openai-completions`
-- **Base URL**: `https://api.agnes-ai.cn/v1`
+- **Base URL**: `https://api.agnes-ai.cn/v1` (China) or `https://apihub.agnes-ai.com/v1` (Global)
 - **Models**:
   - `agnes-2.5-flash` (Free, multimodal)
   - `agnes-3.0-flash` (Free, multimodal)

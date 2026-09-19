@@ -63,7 +63,7 @@ export AGNES_API_KEY=你的API密钥
 - **提供商 ID**: `agnes-ai`
 - **显示名称**: `Agnes AI`
 - **API**: `openai-completions`
-- **基础 URL**: `https://api.agnes-ai.cn/v1`
+- **基础 URL**: `https://api.agnes-ai.cn/v1`（中国站）或 `https://apihub.agnes-ai.com/v1`（国际站）
 - **模型**:
   - `agnes-2.5-flash`（免费，多模态）
   - `agnes-3.0-flash`（免费，多模态）

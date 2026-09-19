@@ -6,6 +6,7 @@
  */
 export interface AgnesVideoToolConfig {
     apiKey: string;
+    /** Base URL for Agnes AI API. Use https://api.agnes-ai.cn/v1 for China or https://apihub.agnes-ai.com/v1 for Global */
     baseURL: string;
 }
 export interface AgnesVideoGenerationOptions {

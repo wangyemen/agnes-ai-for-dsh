@@ -121,16 +121,33 @@ export const AGNES_ALL_MODELS = [
 // ============================================================================
 
 export const AGNES_PROVIDER_ID = 'agnes-ai'
-export const AGNES_BASE_URL = 'https://api.agnes-ai.cn/v1'
 export const AGNES_API_KEY_ENV = 'AGNES_API_KEY'
 export const AGNES_SETTINGS_NS = 'llm-pi-ai'
 export const AGNES_SETTINGS_PATH = ['providers', 'agnes-ai']
+
+/** China region API endpoint */
+export const AGNES_BASE_URL_CN = 'https://api.agnes-ai.cn/v1'
+/** Global/International region API endpoint */
+export const AGNES_BASE_URL_GLOBAL = 'https://apihub.agnes-ai.com/v1'
+
+/** Available regions for Agnes AI */
+export const AGNES_REGIONS = {
+  CN: 'cn',
+  GLOBAL: 'global',
+} as const
+
+export type AgnesRegion = typeof AGNES_REGIONS[keyof typeof AGNES_REGIONS]
+
+/** Get base URL based on region */
+export function getAgnesBaseUrl(region: AgnesRegion = 'cn'): string {
+  return region === 'global' ? AGNES_BASE_URL_GLOBAL : AGNES_BASE_URL_CN
+}
 
 export const AGNES_PROVIDER_CONFIG = {
   displayName: 'Agnes AI',
   apiKeyEnv: AGNES_API_KEY_ENV,
   api: 'openai-completions' as const,
-  baseURL: AGNES_BASE_URL,
+  baseURL: AGNES_BASE_URL_CN,
   models: AGNES_TEXT_MODELS,
 }
 
