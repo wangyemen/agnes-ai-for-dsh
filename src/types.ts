@@ -213,14 +213,7 @@ export interface AgnesModelPricing {
   /** Supports image input (text models only) */
   supportsImageInput?: boolean;
   /** Pricing info for paid models */
-  pricing?: {
-    inputCacheHit?: string;
-    input?: string;
-    output?: string;
-    perSecond?: string;
-    perImage?: string;
-    perFrame?: string;
-  };
+  pricing?: Record<string, string>;
 }
 
 /** Complete pricing catalog */

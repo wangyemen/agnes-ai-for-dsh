@@ -17,10 +17,6 @@
       "types": "./src/types.ts",
       "default": "./src/index.ts"
     },
-    "./client": {
-      "types": "./src/client/index.ts",
-      "default": "./src/client/index.ts"
-    },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
@@ -36,27 +32,16 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
-    },
-    "client": {
-      "inject": [
-        "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-api-remotes"
-      ],
-      "platform": "web"
     }
   },
   "dependencies": {
-    "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-llm-pi-ai": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-llm": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-settings": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-credentials": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-timeout": "^0.1.5-rc.2",
-    "@earendil-works/pi-ai": "^0.85.1"
+    "@deepseek-ai/cordis": "^4.0.2"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
   },
   "scripts": {
     "build": "echo 'TypeScript source included directly'"
