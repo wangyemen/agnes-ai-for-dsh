@@ -1,7 +1,7 @@
 {
   "name": "agnes-ai-for-dsh",
   "description": "Agnes AI integration for DeepSeek Harness - text, image, and video generation via Agnes AI API",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "publishConfig": {
     "access": "public"
   },
