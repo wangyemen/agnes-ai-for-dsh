@@ -2,13 +2,13 @@
 # Provides text, image, and video generation capabilities via Agnes AI API
 #
 # Models are categorized into:
-#   1. Text Models (免费/付费)
-#   2. Image Generation Models (免费)
-#   3. Video Generation Models (免费/付费)
+#   1. Text Models (free/paid)
+#   2. Image Generation Models (free)
+#   3. Video Generation Models (free/paid)
 
 - insert:
     # ============================================================================
-    # LLM Provider: Agnes AI Chat Completions
+    # LLM Provider: Agnes AI Chat Completions (China)
     # ============================================================================
     - id: llm-agnes
       name: '@deepseek-ai/dsh-llm-pi-ai'
@@ -20,55 +20,65 @@
             api: openai-completions
             baseURL: https://api.agnes-ai.cn/v1
             models:
-              # ── Text Models (免费) ───────────────────────────────────────
+              # ── Text Models (free) ───────────────────────────────────────
               - id: agnes-2.5-flash
                 name: 'Agnes 2.5 Flash'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
-                description: '免费·多模态对话·编码优化·智能体工作流'
                 reasoningEfforts:
-                  off: {}
+                  off:
                   high: high
-                systemPromptUpdate: in-history
 
               - id: agnes-3.0-flash
                 name: 'Agnes 3.0 Flash'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
-                description: '免费·新一代Agent编程模型·工具调用强化'
                 reasoningEfforts:
-                  off: {}
+                  off:
                   high: high
-                systemPromptUpdate: in-history
 
-              # ── Text Models (付费·推理模型) ──────────────────────────────
+              # ── Text Models (paid) ───────────────────────────────────────
               - id: agnes-2.5-pro
                 name: 'Agnes 2.5 Pro'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
-                description: '付费·高级推理·科学计算·长上下文分析'
-                pricing: paid
                 reasoningEfforts:
-                  off: {}
+                  off:
                   high: high
-                systemPromptUpdate: in-history
 
               - id: agnes-2.5-pro-beta
                 name: 'Agnes 2.5 Pro Beta'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
-                description: '付费·打榜模型·Artificial Analysis评测'
-                pricing: paid
                 reasoningEfforts:
-                  off: {}
+                  off:
                   high: high
-                systemPromptUpdate: in-history
 
-    # ── 国际版端点 ─────────────────────────────────────────────────────────────
+              # ── Image Models (free, no reasoning) ────────────────────────
+              - id: agnes-image-2.1-flash
+                name: 'Agnes Image 2.1 Flash'
+                reasoningEfforts: false
+
+              - id: agnes-image-2.5-flash
+                name: 'Agnes Image 2.5 Flash'
+                reasoningEfforts: false
+
+              # ── Video Models (free/paid, no reasoning) ───────────────────
+              - id: agnes-video-v2.0
+                name: 'Agnes Video V2.0'
+                reasoningEfforts: false
+
+              - id: agnes-video-25-flash
+                name: 'Agnes Video 2.5 Flash'
+                reasoningEfforts: false
+
+              - id: agnes-video-25
+                name: 'Agnes Video 2.5'
+                reasoningEfforts: false
+
+    # ============================================================================
+    # LLM Provider: Agnes AI Chat Completions (Global)
+    # ============================================================================
     - id: llm-agnes-intl
       name: '@deepseek-ai/dsh-llm-pi-ai'
       config:
@@ -79,54 +89,58 @@
             api: openai-completions
             baseURL: https://apihub.agnes-ai.com/v1
             models:
+              # ── Text Models (free) ───────────────────────────────────────
               - id: agnes-2.5-flash
                 name: 'Agnes 2.5 Flash (Global)'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
-                description: '免费·多模态对话（国际版）'
                 reasoningEfforts:
-                  off: {}
+                  off:
                   high: high
-                systemPromptUpdate: in-history
 
               - id: agnes-3.0-flash
                 name: 'Agnes 3.0 Flash (Global)'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
-                description: '免费·新一代Agent编程模型（国际版）'
                 reasoningEfforts:
-                  off: {}
+                  off:
                   high: high
-                systemPromptUpdate: in-history
 
+              # ── Text Models (paid) ───────────────────────────────────────
               - id: agnes-2.5-pro
                 name: 'Agnes 2.5 Pro (Global)'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
-                description: '付费·高级推理（国际版）'
-                pricing: paid
                 reasoningEfforts:
-                  off: {}
+                  off:
                   high: high
-                systemPromptUpdate: in-history
 
               - id: agnes-2.5-pro-beta
                 name: 'Agnes 2.5 Pro Beta (Global)'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
-                description: '付费·打榜模型（国际版）'
-                pricing: paid
                 reasoningEfforts:
-                  off: {}
+                  off:
                   high: high
-                systemPromptUpdate: in-history
 
-    # ============================================================================
-    # GUI: Agnes AI Settings Panel
-    # ============================================================================
-    - id: agnes-ai-settings
-      name: 'agnes-ai-for-dsh'
+              # ── Image Models (free, no reasoning) ────────────────────────
+              - id: agnes-image-2.1-flash
+                name: 'Agnes Image 2.1 Flash (Global)'
+                reasoningEfforts: false
+
+              - id: agnes-image-2.5-flash
+                name: 'Agnes Image 2.5 Flash (Global)'
+                reasoningEfforts: false
+
+              # ── Video Models (free/paid, no reasoning) ───────────────────
+              - id: agnes-video-v2.0
+                name: 'Agnes Video V2.0 (Global)'
+                reasoningEfforts: false
+
+              - id: agnes-video-25-flash
+                name: 'Agnes Video 2.5 Flash (Global)'
+                reasoningEfforts: false
+
+              - id: agnes-video-25
+                name: 'Agnes Video 2.5 (Global)'
+                reasoningEfforts: false

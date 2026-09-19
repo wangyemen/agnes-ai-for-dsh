@@ -1,18 +1,15 @@
 /**
- * Agnes AI Settings Panel for DSH Web GUI
- * 
- * Provides a settings panel for configuring Agnes AI models,
- * with paid model confirmation dialogs.
+ * Agnes AI client exports for DSH
+ *
+ * Re-exports model information for use by the settings panel.
  */
 
-import { defineClientPlugin } from '@deepseek-ai/cordis';
-
 // ============================================================================
-// Model Configuration
+// Model Definitions
 // ============================================================================
 
 /** Free text models - available without confirmation */
-const FREE_TEXT_MODELS = [
+export const FREE_TEXT_MODELS = [
   {
     id: 'agnes-2.5-flash',
     name: 'Agnes 2.5 Flash',
@@ -29,10 +26,10 @@ const FREE_TEXT_MODELS = [
     maxTokens: 65536,
     supportsImage: true,
   },
-];
+] as const;
 
 /** Paid text models - require confirmation */
-const PAID_TEXT_MODELS = [
+export const PAID_TEXT_MODELS = [
   {
     id: 'agnes-2.5-pro',
     name: 'Agnes 2.5 Pro',
@@ -61,8 +58,11 @@ const PAID_TEXT_MODELS = [
   },
 ];
 
+/** All text models */
+export const ALL_TEXT_MODELS = [...FREE_TEXT_MODELS, ...PAID_TEXT_MODELS] as const;
+
 /** Free image models */
-const FREE_IMAGE_MODELS = [
+export const FREE_IMAGE_MODELS = [
   {
     id: 'agnes-image-2.1-flash',
     name: 'Agnes Image 2.1 Flash',
@@ -73,10 +73,10 @@ const FREE_IMAGE_MODELS = [
     name: 'Agnes Image 2.5 Flash',
     description: '免费·最新一代图像模型·全面超越2.1版本',
   },
-];
+] as const;
 
 /** Free video models */
-const FREE_VIDEO_MODELS = [
+export const FREE_VIDEO_MODELS = [
   {
     id: 'agnes-video-v2.0',
     name: 'Agnes Video V2.0',
@@ -87,10 +87,10 @@ const FREE_VIDEO_MODELS = [
     name: 'Agnes Video 2.5 Flash',
     description: '免费·异步任务API·720P专享',
   },
-];
+] as const;
 
 /** Paid video models */
-const PAID_VIDEO_MODELS = [
+export const PAID_VIDEO_MODELS = [
   {
     id: 'agnes-video-25',
     name: 'Agnes Video 2.5',
@@ -105,49 +105,15 @@ const PAID_VIDEO_MODELS = [
 ];
 
 // ============================================================================
-// Plugin Definition
-// ============================================================================
-
-export const agnesAISettingsPlugin = defineClientPlugin({
-  id: 'agnes-ai-settings',
-  name: 'agnes-ai-for-dsh',
-  
-  /**
-   * Register the Agnes AI provider configuration
-   * This will be picked up by the dsh-llm-pi-ai adapter
-   */
-  setup(ctx) {
-    // Provider configuration for pi-ai adapter
-    const providerConfig = {
-      displayName: 'Agnes AI',
-      api: 'openai-completions' as const,
-      baseURL: ctx.config?.baseURL || 'https://api.agnes-ai.cn/v1',
-      models: [
-        ...FREE_TEXT_MODELS,
-        ...PAID_TEXT_MODELS,
-      ],
-    };
-
-    // Expose models through the LLM service
-    ctx.llm?.registerProvider('agnes', providerConfig);
-    
-    // Return cleanup function
-    return () => {
-      ctx.llm?.unregisterProvider('agnes');
-    };
-  },
-});
-
-// ============================================================================
-// Exported Types
+// Types
 // ============================================================================
 
 export interface AgnesModelInfo {
   id: string;
   name: string;
   description: string;
-  isFree: boolean;
-  category: 'text' | 'image' | 'video';
+  isFree?: boolean;
+  category?: 'text' | 'image' | 'video';
   contextWindow?: number;
   maxTokens?: number;
   supportsImage?: boolean;
@@ -156,7 +122,6 @@ export interface AgnesModelInfo {
 
 export interface AgnesProviderConfig {
   displayName: string;
-  api: 'openai-completions';
   baseURL: string;
   models: AgnesModelInfo[];
 }
