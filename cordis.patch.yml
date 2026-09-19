@@ -1,8 +1,9 @@
 # Agnes AI Plugin for DeepSeek Harness
-# Provides image/video generation tools and LLM provider integration
+# Provides LLM provider integration with multimodal support
+# and image/video generation tools
 
 - insert:
-    # LLM Provider: Agnes AI
+    # LLM Provider: Agnes AI (via pi-ai adapter)
     - id: llm-agnes
       name: '@deepseek-ai/dsh-llm-pi-ai'
       config:
@@ -18,7 +19,7 @@
                 name: 'Agnes 2.5 Flash'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
+                input: ['text', 'image']
                 description: '免费·多模态对话·编码优化'
                 systemPromptUpdate: in-history
 
@@ -26,7 +27,7 @@
                 name: 'Agnes 3.0 Flash'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
+                input: ['text', 'image']
                 description: '免费·新一代Agent编程模型'
                 systemPromptUpdate: in-history
 
@@ -35,22 +36,44 @@
                 name: 'Agnes 2.5 Pro'
                 contextWindow: 524288
                 defaultMaxTokens: 65536
-                image: true
+                input: ['text', 'image']
                 description: '付费·高级推理·科学计算'
-                pricing: paid
+                systemPromptUpdate: in-history
+
+              - id: agnes-2.5-pro-beta
+                name: 'Agnes 2.5 Pro Beta'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                input: ['text', 'image']
+                description: '付费·打榜模型'
                 systemPromptUpdate: in-history
 
               # Image generation models
+              - id: agnes-image-2.1-flash
+                name: 'Agnes Image 2.1 Flash'
+                input: ['text']
+                description: '免费·文生图·图生图·多图合成'
+
               - id: agnes-image-2.5-flash
                 name: 'Agnes Image 2.5 Flash'
-                image: true
-                description: '免费·图像生成'
+                input: ['text']
+                description: '免费·最新一代图像模型'
 
               # Video generation models
+              - id: agnes-video-v2.0
+                name: 'Agnes Video V2.0'
+                input: ['text']
+                description: '免费·文生视频·图生视频·关键帧动画'
+
               - id: agnes-video-25-flash
                 name: 'Agnes Video 2.5 Flash'
-                image: false
-                description: '免费·视频生成'
+                input: ['text']
+                description: '免费·异步任务API·720P专享'
+
+              - id: agnes-video-25
+                name: 'Agnes Video 2.5'
+                input: ['text']
+                description: '付费·多分辨率·首尾帧控制'
 
     # GUI Settings Panel
     - id: agnes-ai-settings

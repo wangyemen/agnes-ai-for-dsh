@@ -1,7 +1,7 @@
 {
   "name": "agnes-ai-for-dsh",
   "description": "Agnes AI integration for DeepSeek Harness - LLM provider with multimodal support and GUI settings panel",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "publishConfig": {
     "access": "public"
   },
@@ -20,6 +20,14 @@
     "./client": {
       "types": "./lib/client/index.d.ts",
       "default": "./lib/client/index.js"
+    },
+    "./tools": {
+      "types": "./lib/tools/index.d.ts",
+      "default": "./lib/tools/index.js"
+    },
+    "./types": {
+      "types": "./lib/types.d.ts",
+      "default": "./lib/types.js"
     },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
@@ -53,7 +61,7 @@
     "prepare": "npm run build"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2",
-    "typescript": "^7.0.2"
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   }
 }

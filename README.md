@@ -7,19 +7,31 @@ English | [中文](README.zh.md)
 This plugin integrates [Agnes AI](https://agnes-ai.cn) into DeepSeek Harness as both:
 1. **LLM Provider** - with multimodal support (image understanding)
 2. **Tools** - for image and video generation
+3. **GUI Settings Panel** - dedicated Agnes AI section in DSH settings
 
 ## Features
 
 ### LLM Provider (agnes-ai)
 - Multimodal chat with image understanding
 - Multiple models: Flash (free), Pro (paid)
-- OpenAI-compatible API
+- OpenAI-compatible API (`openai-completions`)
 - Streaming responses
 - Thinking mode support
 
-### Tools
-- `agnes_image_generation` - Generate images
-- `agnes_video_generation` - Generate videos
+### Image Generation
+- `agnes_image_generation` tool for text-to-image and image-to-image
+- Models: agnes-image-2.1-flash, agnes-image-2.5-flash
+
+### Video Generation
+- `agnes_video_generation` tool for text-to-video and image-to-video
+- Async task-based generation with polling support
+- Models: agnes-video-v2.0, agnes-video-25-flash, agnes-video-25
+
+### GUI Settings Panel
+- **Agnes AI button** in the DSH settings sidebar
+- Automatic detection of `agnes-ai` provider configuration
+- Shows configured models and their status
+- Guidance for new users to add the provider
 
 ## Installation
 
@@ -39,10 +51,15 @@ dsh plugin --profile web add agnes-ai-for-dsh
 export AGNES_API_KEY=your_api_key_here
 ```
 
-### 2. Add Provider in Settings
+Or set it through the DSH credentials system.
 
+### 2. Add Provider (Auto or Manual)
+
+**Auto (via plugin):**
+The plugin automatically injects the `agnes-ai` provider configuration via `cordis.patch.yml`.
+
+**Manual:**
 Go to **Settings → Models** and add a new provider:
-
 - **Provider ID**: `agnes-ai`
 - **Display Name**: `Agnes AI`
 - **API**: `openai-completions`
@@ -54,9 +71,15 @@ Go to **Settings → Models** and add a new provider:
   - `agnes-image-2.5-flash` (Free, image generation)
   - `agnes-video-25-flash` (Free, video generation)
 
-### 3. Enable Multimodal
+### 3. Using the Agnes AI Settings Panel
 
-Make sure to check the **"Image"** option for text models to enable image understanding.
+1. Click the **Agnes AI** button in the settings sidebar
+2. If not configured, you'll see guidance to add the provider
+3. If configured, you'll see:
+   - Provider status (configured/not configured)
+   - API key status
+   - List of all available models
+   - Model categories (text/image/video)
 
 ## Usage
 
@@ -79,6 +102,29 @@ The agent can use the `agnes_video_generation` tool:
 - User: "Generate a video of a cat walking"
 - Agent: Calls `agnes_video_generation` tool
 - Agent: Returns the video task ID
+
+## Model Catalog
+
+### Text Models (Multimodal)
+| Model | Price | Context | Max Output | Image Input |
+|-------|-------|---------|------------|-------------|
+| agnes-2.5-flash | Free | 512K | 64K | Yes |
+| agnes-3.0-flash | Free | 512K | 64K | Yes |
+| agnes-2.5-pro | Paid | 512K | 64K | Yes |
+| agnes-2.5-pro-beta | Paid | 512K | 64K | Yes |
+
+### Image Models
+| Model | Price | Description |
+|-------|-------|-------------|
+| agnes-image-2.1-flash | Free | Text/Image to image |
+| agnes-image-2.5-flash | Free | Latest generation |
+
+### Video Models
+| Model | Price | Description |
+|-------|-------|-------------|
+| agnes-video-v2.0 | Free | Text/Image to video |
+| agnes-video-25-flash | Free | Async API, 720P |
+| agnes-video-25 | Paid | Multi-resolution |
 
 ## API Documentation
 
