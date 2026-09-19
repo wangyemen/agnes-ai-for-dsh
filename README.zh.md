@@ -45,21 +45,22 @@ dsh plugin --profile web add agnes-ai-for-dsh
 
 ## 配置
 
-### 1. 设置 API Key
+### 快速开始（推荐）
 
-```bash
-export AGNES_API_KEY=你的API密钥
-```
+插件会自动注入 `agnes-ai` 提供商配置。您只需要：
 
-或通过 DSH 凭证系统设置。
+1. 进入 **设置 → 模型**
+2. 在提供商列表中找到 **Agnes AI**
+3. 在 **API Key** 字段输入您的 API 密钥
+4. 点击 **保存**
 
-### 2. 添加提供商（自动或手动）
+完成！API Key 会通过 DSH 内置的凭证系统安全保存。
 
-**自动（通过插件）：**
-插件通过 `cordis.patch.yml` 自动注入 `agnes-ai` 提供商配置。
+### 手动配置
 
-**手动：**
-进入 **设置 → 模型**，添加新提供商：
+如果您喜欢手动设置：
+
+**提供商设置：**
 - **提供商 ID**: `agnes-ai`
 - **显示名称**: `Agnes AI`
 - **API**: `openai-completions`
@@ -70,6 +71,8 @@ export AGNES_API_KEY=你的API密钥
   - `agnes-2.5-pro`（付费，多模态）
   - `agnes-image-2.5-flash`（免费，图像生成）
   - `agnes-video-25-flash`（免费，视频生成）
+
+**API Key:** 在提供商的 API Key 字段输入您的 Agnes AI API 密钥。DSH 会安全保存。
 
 ### 3. 使用 Agnes AI 设置面板
 

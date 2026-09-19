@@ -45,21 +45,22 @@ dsh plugin --profile web add agnes-ai-for-dsh
 
 ## Configuration
 
-### 1. Set API Key
+### Quick Start (Recommended)
 
-```bash
-export AGNES_API_KEY=your_api_key_here
-```
+The plugin automatically injects the `agnes-ai` provider configuration. You only need to:
 
-Or set it through the DSH credentials system.
+1. Go to **Settings → Models**
+2. Find **Agnes AI** in the provider list
+3. Enter your API Key in the **API Key** field
+4. Click **Save**
 
-### 2. Add Provider (Auto or Manual)
+That's it! The API key is saved through DSH's built-in credentials system.
 
-**Auto (via plugin):**
-The plugin automatically injects the `agnes-ai` provider configuration via `cordis.patch.yml`.
+### Manual Configuration
 
-**Manual:**
-Go to **Settings → Models** and add a new provider:
+If you prefer to set up manually:
+
+**Provider Settings:**
 - **Provider ID**: `agnes-ai`
 - **Display Name**: `Agnes AI`
 - **API**: `openai-completions`
@@ -70,6 +71,8 @@ Go to **Settings → Models** and add a new provider:
   - `agnes-2.5-pro` (Paid, multimodal)
   - `agnes-image-2.5-flash` (Free, image generation)
   - `agnes-video-25-flash` (Free, video generation)
+
+**API Key:** Enter your Agnes AI API key in the provider's API Key field. It will be saved securely by DSH.
 
 ### 3. Using the Agnes AI Settings Panel
 
