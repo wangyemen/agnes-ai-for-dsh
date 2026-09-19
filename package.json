@@ -1,7 +1,7 @@
 {
   "name": "agnes-ai-for-dsh",
   "description": "Agnes AI integration for DeepSeek Harness - LLM provider with multimodal support and GUI settings panel",
-  "version": "0.1.5",
+  "version": "0.1.4",
   "publishConfig": {
     "access": "public"
   },
@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-tools": "^0.0.1-rc.1"
+    "@deepseek-ai/schemastery": "^3.18.2"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
@@ -61,6 +61,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "@deepseek-ai/dsh-tools": "^0.1.5-rc.2"
   }
 }
