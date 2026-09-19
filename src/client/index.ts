@@ -1,8 +1,11 @@
 /**
- * Agnes AI client exports for DSH
- *
- * Re-exports model information for use by the settings panel.
+ * Agnes AI Client Plugin for DeepSeek Harness
+ * 
+ * Provides GUI settings panel for configuring Agnes AI.
+ * Registers a settings section in the DSH web client.
  */
+
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 
 // ============================================================================
 // Model Definitions
@@ -124,4 +127,68 @@ export interface AgnesProviderConfig {
   displayName: string;
   baseURL: string;
   models: AgnesModelInfo[];
+}
+
+// ============================================================================
+// Client Plugin
+// ============================================================================
+
+export const name = 'agnes-ai-for-dsh-client'
+
+export const inject = ['settings', 'slots'] as const
+
+export function apply(ctx: ClientContext): void {
+  ctx.logger?.info?.(`[${name}] loading`)
+  
+  // Register settings section in the sidebar
+  ctx.slots?.inject?.('settings.section', () => {
+    return {
+      key: 'agnes-ai-settings',
+      title: 'Agnes AI',
+      icon: 'sparkles',
+      order: 50,
+      
+      render: () => {
+        // This would render the settings panel UI
+        // For now, return a simple placeholder
+        return {
+          type: 'div',
+          children: [
+            { type: 'h2', children: 'Agnes AI 配置' },
+            { type: 'p', children: '请在 设置 → 模型 中配置 Agnes AI 提供商' },
+            { type: 'hr' },
+            { 
+              type: 'details', 
+              children: [
+                { type: 'summary', children: '快速配置' },
+                { 
+                  type: 'pre', 
+                  children: JSON.stringify({
+                    llm_pi_ai: {
+                      providers: {
+                        'agnes-ai': {
+                          displayName: 'Agnes AI',
+                          apiKeyEnv: 'AGNES_API_KEY',
+                          api: 'openai-completions',
+                          baseURL: 'https://api.agnes-ai.cn/v1',
+                          models: [
+                            { id: 'agnes-2.5-flash', image: true },
+                            { id: 'agnes-3.0-flash', image: true },
+                            { id: 'agnes-image-2.5-flash' },
+                            { id: 'agnes-video-25-flash' },
+                          ],
+                        },
+                      },
+                    },
+                  }, null, 2)
+                },
+              ]
+            },
+          ]
+        }
+      }
+    }
+  })
+  
+  ctx.logger?.info?.(`[${name}] loaded`)
 }

@@ -22,9 +22,6 @@
                 defaultMaxTokens: 65536
                 image: true
                 description: '免费·多模态对话·编码优化'
-                reasoningEfforts:
-                  off: {}
-                  high: high
                 systemPromptUpdate: in-history
 
               - id: agnes-3.0-flash
@@ -33,9 +30,6 @@
                 defaultMaxTokens: 65536
                 image: true
                 description: '免费·新一代Agent编程模型'
-                reasoningEfforts:
-                  off: {}
-                  high: high
                 systemPromptUpdate: in-history
 
               # Paid text models
@@ -46,9 +40,6 @@
                 image: true
                 description: '付费·高级推理·科学计算'
                 pricing: paid
-                reasoningEfforts:
-                  off: {}
-                  high: high
                 systemPromptUpdate: in-history
 
               # Image generation models
@@ -56,14 +47,12 @@
                 name: 'Agnes Image 2.5 Flash'
                 image: true
                 description: '免费·最新一代图像生成模型'
-                reasoningEfforts: false
 
               # Video generation models
               - id: agnes-video-25-flash
                 name: 'Agnes Video 2.5 Flash'
                 image: false
                 description: '免费·异步视频生成'
-                reasoningEfforts: false
 
     # GUI Settings Panel
     - id: agnes-ai-settings

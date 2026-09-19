@@ -14,7 +14,8 @@
     "rootDir": "./src",
     "resolveJsonModule": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "react"
+    "jsxImportSource": "react",
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "lib", "dist"]

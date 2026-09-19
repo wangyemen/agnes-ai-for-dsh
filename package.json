@@ -1,7 +1,7 @@
 {
   "name": "agnes-ai-for-dsh",
-  "description": "Agnes AI integration for DeepSeek Harness - LLM provider with multimodal support",
-  "version": "0.1.2",
+  "description": "Agnes AI integration for DeepSeek Harness - LLM provider with multimodal support and GUI settings panel",
+  "version": "0.3.0",
   "publishConfig": {
     "access": "public"
   },
@@ -10,14 +10,22 @@
     "url": "https://github.com/wangyemen/agnes-ai-for-dsh"
   },
   "type": "module",
-  "main": "src/index.ts",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/client/index.d.ts",
+      "default": "./lib/client/index.js"
+    },
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
   "files": [
-    "src/**/*",
+    "lib",
     "cordis.patch.yml",
     "README.md",
     "README.zh.md"
@@ -26,6 +34,12 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "settings",
+        "slots"
+      ]
     }
   },
   "dependencies": {
@@ -33,5 +47,12 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2"
   }
 }
