@@ -1,7 +1,7 @@
 {
   "name": "agnes-ai-for-dsh",
-  "description": "Agnes AI tools for DeepSeek Harness - image and video generation",
-  "version": "0.1.0",
+  "description": "Agnes AI integration for DeepSeek Harness - LLM provider with image/video generation tools",
+  "version": "0.2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -13,11 +13,13 @@
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./client": "./src/client/index.ts",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
   "files": [
     "src/**/*",
+    "lib/**/*",
     "cordis.patch.yml",
     "README.md",
     "README.zh.md"
@@ -26,10 +28,19 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-api-remotes"
+      ],
+      "platform": "web"
     }
   },
   "dependencies": {
-    "@deepseek-ai/cordis": "^4.0.2"
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-llm-pi-ai": "^0.1.5-rc.2"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
