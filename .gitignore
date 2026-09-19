@@ -1,0 +1,9 @@
+node_modules/
+lib/
+dist/
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+# Internal reference docs (not for distribution)
+API/
+exa.txt

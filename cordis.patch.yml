@@ -1,0 +1,132 @@
+# Agnes AI Plugin for DeepSeek Harness
+# Provides text, image, and video generation capabilities via Agnes AI API
+#
+# Models are categorized into:
+#   1. Text Models (免费/付费)
+#   2. Image Generation Models (免费)
+#   3. Video Generation Models (免费/付费)
+
+- insert:
+    # ============================================================================
+    # LLM Provider: Agnes AI Chat Completions
+    # ============================================================================
+    - id: llm-agnes
+      name: '@deepseek-ai/dsh-llm-pi-ai'
+      config:
+        providers:
+          agnes:
+            displayName: 'Agnes AI'
+            apiKeyEnv: AGNES_API_KEY
+            api: openai-completions
+            baseURL: https://api.agnes-ai.cn/v1
+            models:
+              # ── Text Models (免费) ───────────────────────────────────────
+              - id: agnes-2.5-flash
+                name: 'Agnes 2.5 Flash'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '免费·多模态对话·编码优化·智能体工作流'
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
+
+              - id: agnes-3.0-flash
+                name: 'Agnes 3.0 Flash'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '免费·新一代Agent编程模型·工具调用强化'
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
+
+              # ── Text Models (付费·推理模型) ──────────────────────────────
+              - id: agnes-2.5-pro
+                name: 'Agnes 2.5 Pro'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '付费·高级推理·科学计算·长上下文分析'
+                pricing: paid
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
+
+              - id: agnes-2.5-pro-beta
+                name: 'Agnes 2.5 Pro Beta'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '付费·打榜模型·Artificial Analysis评测'
+                pricing: paid
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
+
+    # ── 国际版端点 ─────────────────────────────────────────────────────────────
+    - id: llm-agnes-intl
+      name: '@deepseek-ai/dsh-llm-pi-ai'
+      config:
+        providers:
+          agnes-intl:
+            displayName: 'Agnes AI (Global)'
+            apiKeyEnv: AGNES_API_KEY
+            api: openai-completions
+            baseURL: https://apihub.agnes-ai.com/v1
+            models:
+              - id: agnes-2.5-flash
+                name: 'Agnes 2.5 Flash (Global)'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '免费·多模态对话（国际版）'
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
+
+              - id: agnes-3.0-flash
+                name: 'Agnes 3.0 Flash (Global)'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '免费·新一代Agent编程模型（国际版）'
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
+
+              - id: agnes-2.5-pro
+                name: 'Agnes 2.5 Pro (Global)'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '付费·高级推理（国际版）'
+                pricing: paid
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
+
+              - id: agnes-2.5-pro-beta
+                name: 'Agnes 2.5 Pro Beta (Global)'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '付费·打榜模型（国际版）'
+                pricing: paid
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
+
+    # ============================================================================
+    # GUI: Agnes AI Settings Panel
+    # ============================================================================
+    - id: agnes-ai-settings
+      name: 'agnes-ai-for-dsh'
