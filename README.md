@@ -45,22 +45,26 @@ dsh plugin --profile web add agnes-ai-for-dsh
 
 ## Configuration
 
-### Quick Start (Recommended)
+### 1. Allow Build Scripts (First Time Only)
 
-The plugin automatically injects the `agnes-ai` provider configuration. You only need to:
+The first time you install the plugin, pnpm will block build scripts for security. You need to add the package to the allowlist:
 
-1. Go to **Settings → Models**
-2. Find **Agnes AI** in the provider list
-3. Enter your API Key in the **API Key** field
-4. Click **Save**
+Open `D:\dsh\home\profiles\web\pnpm-workspace.yaml` and add:
 
-That's it! The API key is saved through DSH's built-in credentials system.
+```yaml
+allowBuilds:
+  'agnes-ai-for-dsh@https://codeload.github.com/wangyemen/agnes-ai-for-dsh/tar.gz/<commit-hash>': true
+```
 
-### Manual Configuration
+The exact key will be shown in the error message when pnpm blocks the build.
 
-If you prefer to set up manually:
+### 2. Add Provider (Auto or Manual)
 
-**Provider Settings:**
+**Auto (via plugin):**
+The plugin automatically injects the `agnes-ai` provider configuration via `cordis.patch.yml`.
+
+**Manual:**
+Go to **Settings → Models** and add a new provider:
 - **Provider ID**: `agnes-ai`
 - **Display Name**: `Agnes AI`
 - **API**: `openai-completions`
@@ -72,9 +76,18 @@ If you prefer to set up manually:
   - `agnes-image-2.5-flash` (Free, image generation)
   - `agnes-video-25-flash` (Free, video generation)
 
-**API Key:** Enter your Agnes AI API key in the provider's API Key field. It will be saved securely by DSH.
+### 3. Set API Key
 
-### 3. Using the Agnes AI Settings Panel
+**Important:** You don't need to set environment variables manually. DSH's Settings UI handles this for you.
+
+1. Go to **Settings → Models**
+2. Find **Agnes AI** in the provider list
+3. Enter your API Key in the **API Key** field
+4. Click **Save**
+
+The API key is saved securely through DSH's built-in credentials system.
+
+### 4. Using the Agnes AI Settings Panel
 
 1. Click the **Agnes AI** button in the settings sidebar
 2. If not configured, you'll see guidance to add the provider

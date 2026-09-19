@@ -45,22 +45,26 @@ dsh plugin --profile web add agnes-ai-for-dsh
 
 ## 配置
 
-### 快速开始（推荐）
+### 1. 允许构建脚本（首次安装）
 
-插件会自动注入 `agnes-ai` 提供商配置。您只需要：
+首次安装插件时，pnpm 会因安全原因阻止构建脚本。您需要将包添加到允许列表：
 
-1. 进入 **设置 → 模型**
-2. 在提供商列表中找到 **Agnes AI**
-3. 在 **API Key** 字段输入您的 API 密钥
-4. 点击 **保存**
+打开 `D:\dsh\home\profiles\web\pnpm-workspace.yaml` 并添加：
 
-完成！API Key 会通过 DSH 内置的凭证系统安全保存。
+```yaml
+allowBuilds:
+  'agnes-ai-for-dsh@https://codeload.github.com/wangyemen/agnes-ai-for-dsh/tar.gz/<commit-hash>': true
+```
 
-### 手动配置
+pnpm 阻止构建时会显示确切的 key。
 
-如果您喜欢手动设置：
+### 2. 添加提供商（自动或手动）
 
-**提供商设置：**
+**自动（通过插件）：**
+插件通过 `cordis.patch.yml` 自动注入 `agnes-ai` 提供商配置。
+
+**手动：**
+进入 **设置 → 模型**，添加新提供商：
 - **提供商 ID**: `agnes-ai`
 - **显示名称**: `Agnes AI`
 - **API**: `openai-completions`
@@ -72,9 +76,18 @@ dsh plugin --profile web add agnes-ai-for-dsh
   - `agnes-image-2.5-flash`（免费，图像生成）
   - `agnes-video-25-flash`（免费，视频生成）
 
-**API Key:** 在提供商的 API Key 字段输入您的 Agnes AI API 密钥。DSH 会安全保存。
+### 3. 设置 API Key
 
-### 3. 使用 Agnes AI 设置面板
+**重要：** 您不需要手动设置环境变量。DSH 的设置界面会自动处理。
+
+1. 进入 **设置 → 模型**
+2. 在提供商列表中找到 **Agnes AI**
+3. 在 **API Key** 字段输入您的 API 密钥
+4. 点击 **保存**
+
+API Key 会通过 DSH 内置的凭证系统安全保存。
+
+### 4. 使用 Agnes AI 设置面板
 
 1. 点击设置侧边栏中的 **Agnes AI** 按钮
 2. 如果未配置，将看到添加提供商的引导
