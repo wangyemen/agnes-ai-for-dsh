@@ -1,7 +1,7 @@
 {
   "name": "agnes-ai-for-dsh",
   "description": "Agnes AI tools for DeepSeek Harness - image and video generation",
-  "version": "0.4.1",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
