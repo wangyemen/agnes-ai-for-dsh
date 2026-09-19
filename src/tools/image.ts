@@ -1,34 +1,68 @@
 /**
- * Agnes AI Tool: Image Generation
+ * Agnes AI Image Generation Tool
  * 
- * Provides image generation capabilities using agnes-image-2.1-flash
+ * Generates images using Agnes AI's image generation models.
  */
 
-export interface AgnesImageToolConfig {
-  /** API key environment variable name */
-  apiKeyEnv: string;
-  /** Base URL for the API */
-  baseURL: string;
-}
+import { createTool } from '@deepseek-ai/cordis'
 
-export interface AgnesImageGenerationOptions {
-  /** The text prompt to generate an image from */
-  prompt: string;
-  /** Output size档位: 1K, 2K, 3K, 4K */
-  size: string;
-  /** Aspect ratio: 1:1, 3:4, 4:3, 16:9, 9:16, 2:3, 3:2, 21:9 */
-  ratio?: string;
-  /** Input image(s) for image-to-image or multi-image synthesis */
-  image?: string[];
-  /** Return base64 instead of URL */
-  returnBase64?: boolean;
-}
+export const agnesImageTool = createTool({
+  name: 'agnes_image_generation',
+  description: `Generate images using Agnes AI.
+  
+Supports text-to-image and image-to-image generation.
+Returns an image URL that can be displayed.
 
-export interface AgnesImageGenerationResult {
-  /** Generated image URL */
-  url: string | null;
-  /** Base64 encoded image */
-  b64_json: string | null;
-  /** Revised prompt used by the model */
-  revised_prompt: string | null;
-}
+Parameters:
+- prompt: Text description of the image to generate
+- size: Image size (1K, 2K, 3K, 4K)
+- ratio: Aspect ratio (1:1, 16:9, 9:16, etc.)
+- image: Input image URL for image-to-image (optional)`,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      prompt: { type: 'string', description: 'Text prompt for image generation' },
+      size: { type: 'string', enum: ['1K', '2K', '3K', '4K'], description: 'Output size' },
+      ratio: { type: 'string', enum: ['1:1', '16:9', '9:16', '4:3', '3:4'], description: 'Aspect ratio' },
+      image: { type: 'string', description: 'Input image URL for image-to-image' }
+    },
+    required: ['prompt', 'size']
+  },
+  async execute(args: any, ctx: any) {
+    const apiKey = process.env.AGNES_API_KEY || ctx?.credentials?.get?.('agnes')?.apiKey
+    
+    if (!apiKey) {
+      return { error: 'AGNES_API_KEY not configured. Please set the environment variable.' }
+    }
+
+    try {
+      const response = await fetch('https://api.agnes-ai.cn/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'agnes-image-2.5-flash',
+          prompt: args.prompt,
+          size: args.size,
+          ratio: args.ratio || '1:1'
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.data?.[0]?.url) {
+        return {
+          success: true,
+          image_url: data.data[0].url,
+          message: `Image generated successfully: ${data.data[0].url}`
+        }
+      }
+      
+      return { error: 'Failed to generate image', data }
+    } catch (error: any) {
+      return { error: error.message }
+    }
+  }
+})
