@@ -3,8 +3,10 @@
  *
  * Host-side plugin that:
  * 1. Registers the Agnes AI LLM provider configuration
- * 2. Provides model catalog and API constants
+ * 2. Registers image/video generation tools
+ * 3. Provides model catalog and API constants
  */
+import type { Context } from '@deepseek-ai/cordis';
 export declare const name = "agnes-ai-for-dsh";
 export interface AgnesModelEntry {
     id: string;
@@ -22,7 +24,7 @@ export declare const AGNES_IMAGE_MODELS: AgnesModelEntry[];
 export declare const AGNES_VIDEO_MODELS: AgnesModelEntry[];
 export declare const AGNES_ALL_MODELS: AgnesModelEntry[];
 export declare const AGNES_PROVIDER_ID = "agnes-ai";
-export declare const AGNES_API_KEY_ENV = "AGNES_API_KEY";
+export declare const AGNES_API_KEY_ENV = "AGNES_AI_API_KEY";
 export declare const AGNES_SETTINGS_NS = "llm-pi-ai";
 export declare const AGNES_SETTINGS_PATH: string[];
 /** China region API endpoint */
@@ -191,5 +193,5 @@ export declare const AGNES_TOOLS: ({
         required: string[];
     };
 })[];
-export declare function apply(ctx: any): void;
+export declare function apply(ctx: Context): void;
 //# sourceMappingURL=index.d.ts.map

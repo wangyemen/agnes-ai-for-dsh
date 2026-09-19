@@ -16,10 +16,11 @@
         providers:
           agnes-ai:
             displayName: 'Agnes AI'
-            apiKeyEnv: AGNES_API_KEY
+            apiKeyEnv: AGNES_AI_API_KEY
             api: openai-completions
             # Default to China endpoint
             baseURL: https://api.agnes-ai.cn/v1
+            defaultInput: ['text', 'image']
             models:
               # Free text models with multimodal support
               - id: agnes-2.5-flash

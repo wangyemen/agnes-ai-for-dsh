@@ -3,10 +3,11 @@
  *
  * Host-side plugin that:
  * 1. Registers the Agnes AI LLM provider configuration
- * 2. Provides model catalog and API constants
+ * 2. Registers image/video generation tools
+ * 3. Provides model catalog and API constants
  */
 
-import { Service } from '@deepseek-ai/cordis'
+import type { Context } from '@deepseek-ai/cordis'
 
 export const name = 'agnes-ai-for-dsh'
 
@@ -121,7 +122,7 @@ export const AGNES_ALL_MODELS = [
 // ============================================================================
 
 export const AGNES_PROVIDER_ID = 'agnes-ai'
-export const AGNES_API_KEY_ENV = 'AGNES_API_KEY'
+export const AGNES_API_KEY_ENV = 'AGNES_AI_API_KEY'
 export const AGNES_SETTINGS_NS = 'llm-pi-ai'
 export const AGNES_SETTINGS_PATH = ['providers', 'agnes-ai']
 
@@ -258,20 +259,205 @@ export const AGNES_VIDEO_GENERATION_TOOL = {
 export const AGNES_TOOLS = [AGNES_IMAGE_GENERATION_TOOL, AGNES_VIDEO_GENERATION_TOOL]
 
 // ============================================================================
+// API Key Resolution
+// ============================================================================
+
+/**
+ * 从 DSH credentials 服务读取 Agnes API Key。
+ * 尝试多种可能的 API 形态，兼容不同 DSH 版本的 credentials 服务。
+ */
+async function resolveAgnesApiKey(ctx: any): Promise<string | null> {
+  try {
+    const credentials = ctx.get('credentials')
+    if (!credentials) return null
+
+    const ref = AGNES_API_KEY_ENV
+
+    // 形态 1：resolve([ref]) → { [ref]: 'value' }
+    if (typeof credentials.resolve === 'function') {
+      const result = await credentials.resolve([ref])
+      const v = result?.[ref] ?? result?.values?.[ref]
+      if (typeof v === 'string') return v
+      if (v && typeof v === 'object' && typeof v.value === 'string') return v.value
+    }
+
+    // 形态 2：get(ref) → 'value' | { value: 'value' }
+    if (typeof credentials.get === 'function') {
+      const result = await credentials.get(ref)
+      if (typeof result === 'string') return result
+      if (result && typeof result.value === 'string') return result.value
+    }
+
+    // 形态 3：describe([ref]) → { value: { [ref]: { value } } }
+    if (typeof credentials.describe === 'function') {
+      const result = await credentials.describe([ref])
+      const v = result?.value?.[ref]?.value
+      if (typeof v === 'string') return v
+    }
+
+    return null
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[agnes-ai-for-dsh] resolveAgnesApiKey failed:', err)
+    return null
+  }
+}
+
+// ============================================================================
+// Tool Implementations (HTTP calls)
+// ============================================================================
+
+async function executeImageGeneration(args: any, ctx: any): Promise<unknown> {
+  const apiKey = await resolveAgnesApiKey(ctx)
+  if (!apiKey) {
+    return {
+      error: `Agnes API key not configured. Please set ${AGNES_API_KEY_ENV} in Settings → Credentials.`,
+    }
+  }
+
+  const body: any = {
+    model: args.model || 'agnes-image-2.5-flash',
+    prompt: args.prompt,
+    size: args.size || '1K',
+  }
+  if (args.ratio) body.ratio = args.ratio
+  if (args.image) body.image = [args.image]
+  if (args.return_base64) body.response_format = 'b64_json'
+
+  try {
+    const resp = await fetch(`${AGNES_BASE_URL_CN}/images/generations`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!resp.ok) {
+      const text = await resp.text()
+      return { error: `Agnes Image API error (${resp.status}): ${text}` }
+    }
+
+    const data: any = await resp.json()
+    const item = data?.data?.[0] ?? data?.data ?? data
+    if (!item) return { error: 'Agnes API returned no image data.' }
+
+    const url = item?.url
+    const b64 = item?.b64_json
+    if (url) return { url }
+    if (b64) return { url: `data:image/png;base64,${b64}` }
+    return { error: 'Agnes API returned no URL or b64_json.' }
+  } catch (err: any) {
+    return { error: `Network error: ${err.message || String(err)}` }
+  }
+}
+
+async function executeVideoGeneration(args: any, ctx: any): Promise<unknown> {
+  const apiKey = await resolveAgnesApiKey(ctx)
+  if (!apiKey) {
+    return {
+      error: `Agnes API key not configured. Please set ${AGNES_API_KEY_ENV} in Settings → Credentials.`,
+    }
+  }
+
+  const modelName = args.model || 'agnes-video-25-flash'
+
+  const body: any = {
+    model: modelName,
+    prompt: args.prompt,
+    seconds: args.seconds || '5',
+    size: args.size || '720P',
+    aspect_ratio: args.aspect_ratio || '16:9',
+    mode: args.image ? 'image' : 'text',
+  }
+  if (args.image) body.image = args.image
+
+  // 1. 创建视频生成任务
+  let videoId: string | null = null
+  try {
+    const resp = await fetch(`${AGNES_BASE_URL_CN}/videos`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!resp.ok) {
+      const text = await resp.text()
+      return { error: `Agnes Video create error (${resp.status}): ${text}` }
+    }
+
+    const data: any = await resp.json()
+    videoId = data?.video_id ?? data?.id ?? data?.data?.video_id ?? null
+    if (!videoId) return { error: 'Agnes API did not return a video_id.' }
+  } catch (err: any) {
+    return { error: `Network error during video create: ${err.message || String(err)}` }
+  }
+
+  // 2. 轮询任务状态
+  const maxAttempts = 90 // 约 3 分钟
+  const pollIntervalMs = 2000
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise((r) => setTimeout(r, pollIntervalMs))
+
+    try {
+      const resp = await fetch(
+        `https://api.agnes-ai.cn/agnesapi?video_id=${encodeURIComponent(videoId)}&model_name=${encodeURIComponent(modelName)}`,
+        { headers: { 'Authorization': `Bearer ${apiKey}` } },
+      )
+      if (!resp.ok) continue
+
+      const data: any = await resp.json()
+      const status = data?.status
+
+      if (status === 'completed' || status === 'succeeded' || status === 'success') {
+        const url = data?.metadata?.url ?? data?.url ?? data?.video_url
+        if (!url) return { error: 'Video completed but no URL returned.' }
+        return { url }
+      }
+
+      if (status === 'failed' || status === 'error') {
+        return { error: `Video generation failed: ${data?.error || data?.message || 'unknown'}` }
+      }
+
+      // pending / processing → 继续轮询
+    } catch {
+      // 网络抖动，继续下一次轮询
+    }
+  }
+
+  return { error: 'Video generation timed out after ~3 minutes.' }
+}
+
+// ============================================================================
 // Plugin Entry Point
 // ============================================================================
 
-export function apply(ctx: any): void {
+export function apply(ctx: Context): void {
   ctx.logger?.info?.(`[${name}] loading`)
 
-  // Register the provider config under llm-pi-ai settings namespace
-  // The actual registration happens via cordis.patch.yml which inserts
-  // the dsh-llm-pi-ai bundle with our provider configuration.
-  // This host plugin ensures the settings are available at runtime.
+  ctx.inject(['tools'], (sctx: any) => {
+    // ---- 图片生成工具 ----
+    sctx.tools.register({
+      name: AGNES_IMAGE_GENERATION_TOOL.name,
+      description: AGNES_IMAGE_GENERATION_TOOL.description,
+      parameters: AGNES_IMAGE_GENERATION_TOOL.parameters,
+      execute: async (args: any) => executeImageGeneration(args, sctx),
+    })
 
-  // Log model catalog for debugging
-  ctx.logger?.info?.(`[${name}] registered ${AGNES_ALL_MODELS.length} models`)
-  ctx.logger?.info?.(`[${name}] text: ${AGNES_TEXT_MODELS.length}, image: ${AGNES_IMAGE_MODELS.length}, video: ${AGNES_VIDEO_MODELS.length}`)
+    // ---- 视频生成工具 ----
+    sctx.tools.register({
+      name: AGNES_VIDEO_GENERATION_TOOL.name,
+      description: AGNES_VIDEO_GENERATION_TOOL.description,
+      parameters: AGNES_VIDEO_GENERATION_TOOL.parameters,
+      execute: async (args: any) => executeVideoGeneration(args, sctx),
+    })
+
+    ctx.logger?.info?.(`[${name}] registered 2 tools`)
+  })
 
   ctx.logger?.info?.(`[${name}] loaded`)
 }
