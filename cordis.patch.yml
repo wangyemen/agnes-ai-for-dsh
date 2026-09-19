@@ -9,10 +9,9 @@
 # To use Global endpoint: Edit the provider in Settings → Models
 # and change baseURL to: https://apihub.agnes-ai.com/v1
 
-- insert:
+- patch:
     # LLM Provider: Agnes AI (via pi-ai adapter)
-    - id: llm-agnes
-      name: '@deepseek-ai/dsh-llm-pi-ai'
+    - id: llm-pi-ai
       config:
         providers:
           agnes-ai:
@@ -82,7 +81,7 @@
                 name: 'Agnes Video 2.5'
                 input: ['text']
                 description: '付费·多分辨率·首尾帧控制'
-
+- insert:
     # GUI Settings Panel
     - id: agnes-ai-settings
       name: 'agnes-ai-for-dsh'
