@@ -1,15 +1,70 @@
-# Agnes AI Tools Plugin for DeepSeek Harness
-# Provides image/video generation tools to the DSH agent
+# Agnes AI Plugin for DeepSeek Harness
+# Adds Agnes AI as an LLM provider with multimodal support
+# and image/video generation tools
 
 - insert:
-    # Image Generation Tool
-    - id: tool-agnes-image
-      name: '@deepseek-ai/agnes-ai-tool-image'
+    # LLM Provider: Agnes AI
+    # Uses pi-ai adapter with OpenAI-compatible endpoint
+    - id: llm-agnes
+      name: '@deepseek-ai/dsh-llm-pi-ai'
+      config:
+        providers:
+          agnes-ai:
+            displayName: 'Agnes AI'
+            apiKeyEnv: AGNES_API_KEY
+            api: openai-completions
+            baseURL: https://api.agnes-ai.cn/v1
+            models:
+              # Free text models
+              - id: agnes-2.5-flash
+                name: 'Agnes 2.5 Flash'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '免费·多模态对话·编码优化'
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
 
-    # Video Generation Tool
-    - id: tool-agnes-video
-      name: '@deepseek-ai/agnes-ai-tool-video'
+              - id: agnes-3.0-flash
+                name: 'Agnes 3.0 Flash'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '免费·新一代Agent编程模型'
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
 
-    # Main Plugin Package
-    - id: agnes-ai-tools
+              # Paid text models
+              - id: agnes-2.5-pro
+                name: 'Agnes 2.5 Pro'
+                contextWindow: 524288
+                defaultMaxTokens: 65536
+                image: true
+                description: '付费·高级推理·科学计算'
+                pricing: paid
+                reasoningEfforts:
+                  off: {}
+                  high: high
+                systemPromptUpdate: in-history
+
+              # Image generation models
+              - id: agnes-image-2.5-flash
+                name: 'Agnes Image 2.5 Flash'
+                image: true
+                description: '免费·最新一代图像生成模型'
+                reasoningEfforts: false
+
+              # Video generation models
+              - id: agnes-video-25-flash
+                name: 'Agnes Video 2.5 Flash'
+                image: false
+                description: '免费·异步视频生成'
+                reasoningEfforts: false
+
+    # GUI Settings Panel
+    - id: agnes-ai-settings
       name: 'agnes-ai-for-dsh'
