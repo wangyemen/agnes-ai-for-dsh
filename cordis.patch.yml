@@ -1,11 +1,5 @@
 # Agnes AI Tools Plugin for DeepSeek Harness
-# Provides image/video generation and multimodal tools to the DSH agent
-#
-# This plugin adds TOOLS, not a new LLM provider.
-# The agent can use these tools to:
-# - Generate images (text-to-image, image-to-image)
-# - Generate videos (text-to-video, image-to-video)
-# - The existing LLM providers (DeepSeek, etc.) can already handle image understanding
+# Provides image/video generation tools to the DSH agent
 
 - insert:
     # Image Generation Tool
