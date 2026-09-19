@@ -10,27 +10,27 @@
     "url": "https://github.com/wangyemen/agnes-ai-for-dsh"
   },
   "type": "module",
-  "main": "lib/index.js",
-  "types": "lib/types/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/types.ts",
   "exports": {
     ".": {
-      "types": "./lib/types/index.d.ts",
-      "default": "./lib/index.js"
+      "types": "./src/types.ts",
+      "default": "./src/index.ts"
     },
     "./client": {
-      "types": "./lib/types/client/index.d.ts",
-      "default": "./lib/client.js"
+      "types": "./src/client/index.ts",
+      "default": "./src/client/index.ts"
     },
     "./cordis.patch.yml": "./cordis.patch.yml",
-    "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "lib/**/*.js",
+    "src/**/*",
     "lib/types/**/*.d.ts",
     "cordis.patch.yml",
     "README.md",
-    "README.zh.md"
+    "README.zh.md",
+    "tsconfig.json"
   ],
   "license": "MIT",
   "dsh": {
@@ -58,21 +58,7 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
   },
-  "devDependencies": {
-    "@types/react": "~18.3.1",
-    "react": "^18.2.0",
-    "@deepseek-ai/dsh-client-locale": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-client-store": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-client-ui-primitives": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-client-ui-settings": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-api-remotes": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-client-ui-slots": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-client-ui-renderer": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-util-values": "^0.1.5-rc.2",
-    "clsx": "^2.1.1"
-  },
   "scripts": {
-    "build": "tsdown",
-    "watch": "tsdown --watch"
+    "build": "echo 'TypeScript source included directly'"
   }
 }
