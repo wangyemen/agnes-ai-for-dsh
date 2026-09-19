@@ -1,10 +1,8 @@
 # Agnes AI Plugin for DeepSeek Harness
-# Adds Agnes AI as an LLM provider with multimodal support
-# and image/video generation tools
+# Provides image/video generation tools and LLM provider integration
 
 - insert:
     # LLM Provider: Agnes AI
-    # Uses pi-ai adapter with OpenAI-compatible endpoint
     - id: llm-agnes
       name: '@deepseek-ai/dsh-llm-pi-ai'
       config:
@@ -15,7 +13,7 @@
             api: openai-completions
             baseURL: https://api.agnes-ai.cn/v1
             models:
-              # Free text models
+              # Free text models with multimodal support
               - id: agnes-2.5-flash
                 name: 'Agnes 2.5 Flash'
                 contextWindow: 524288
@@ -46,13 +44,13 @@
               - id: agnes-image-2.5-flash
                 name: 'Agnes Image 2.5 Flash'
                 image: true
-                description: '免费·最新一代图像生成模型'
+                description: '免费·图像生成'
 
               # Video generation models
               - id: agnes-video-25-flash
                 name: 'Agnes Video 2.5 Flash'
                 image: false
-                description: '免费·异步视频生成'
+                description: '免费·视频生成'
 
     # GUI Settings Panel
     - id: agnes-ai-settings

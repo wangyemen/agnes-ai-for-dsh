@@ -53,6 +53,7 @@
     "prepare": "npm run build"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2"
+    "@types/node": "^26.6.2",
+    "typescript": "^7.0.2"
   }
 }

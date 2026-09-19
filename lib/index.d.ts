@@ -16,7 +16,7 @@ export declare function apply(ctx: any, config: Config): void;
 export declare const AGNES_AI_PROVIDER_CONFIG: {
     displayName: string;
     apiKeyEnv: string;
-    api: "openai-completions";
+    api: 'openai-completions';
     baseURL: string;
     models: ({
         id: string;
@@ -26,12 +26,12 @@ export declare const AGNES_AI_PROVIDER_CONFIG: {
         image: boolean;
         description: string;
     } | {
+        contextWindow?: undefined;
+        maxTokens?: undefined;
         id: string;
         name: string;
         image: boolean;
         description: string;
-        contextWindow?: undefined;
-        maxTokens?: undefined;
     })[];
 };
 //# sourceMappingURL=index.d.ts.map

@@ -2,21 +2,21 @@
  * Agnes AI Types - Complete model catalog and API types
  */
 /** Text models that are free to use */
-export declare const TEXT_FREE_MODELS: readonly ["agnes-2.5-flash", "agnes-3.0-flash"];
+export declare const TEXT_FREE_MODELS: readonly ['agnes-2.5-flash', 'agnes-3.0-flash'];
 export type TextFreeModel = typeof TEXT_FREE_MODELS[number];
 /** Text models that require payment */
-export declare const TEXT_PAID_MODELS: readonly ["agnes-2.5-pro", "agnes-2.5-pro-beta"];
+export declare const TEXT_PAID_MODELS: readonly ['agnes-2.5-pro', 'agnes-2.5-pro-beta'];
 export type TextPaidModel = typeof TEXT_PAID_MODELS[number];
 /** All text models */
 export declare const TEXT_MODELS: readonly ["agnes-2.5-flash", "agnes-3.0-flash", "agnes-2.5-pro", "agnes-2.5-pro-beta"];
 export type TextModel = typeof TEXT_MODELS[number];
 /** Image generation models (all free) */
-export declare const IMAGE_MODELS: readonly ["agnes-image-2.1-flash", "agnes-image-2.5-flash"];
+export declare const IMAGE_MODELS: readonly ['agnes-image-2.1-flash', 'agnes-image-2.5-flash'];
 export type ImageModel = typeof IMAGE_MODELS[number];
 /** Video generation models */
-export declare const VIDEO_FREE_MODELS: readonly ["agnes-video-v2.0", "agnes-video-25-flash"];
+export declare const VIDEO_FREE_MODELS: readonly ['agnes-video-v2.0', 'agnes-video-25-flash'];
 export type VideoFreeModel = typeof VIDEO_FREE_MODELS[number];
-export declare const VIDEO_PAID_MODELS: readonly ["agnes-video-25"];
+export declare const VIDEO_PAID_MODELS: readonly ['agnes-video-25'];
 export type VideoPaidModel = typeof VIDEO_PAID_MODELS[number];
 export declare const VIDEO_MODELS: readonly ["agnes-video-v2.0", "agnes-video-25-flash", "agnes-video-25"];
 export type VideoModel = typeof VIDEO_MODELS[number];
@@ -24,13 +24,13 @@ export type VideoModel = typeof VIDEO_MODELS[number];
 export declare const AGNES_MODELS: readonly ["agnes-2.5-flash", "agnes-3.0-flash", "agnes-2.5-pro", "agnes-2.5-pro-beta", "agnes-image-2.1-flash", "agnes-image-2.5-flash", "agnes-video-v2.0", "agnes-video-25-flash", "agnes-video-25"];
 export type AgnesModel = typeof AGNES_MODELS[number];
 export declare const AGNES_ENDPOINTS: {
-    readonly CHINA: "https://api.agnes-ai.cn/v1";
-    readonly GLOBAL: "https://apihub.agnes-ai.com/v1";
+    readonly CHINA: 'https://api.agnes-ai.cn/v1';
+    readonly GLOBAL: 'https://apihub.agnes-ai.com/v1';
 };
 export type AgnesEndpoint = typeof AGNES_ENDPOINTS[keyof typeof AGNES_ENDPOINTS];
-export declare const IMAGE_SIZES: readonly ["1K", "2K", "3K", "4K"];
+export declare const IMAGE_SIZES: readonly ['1K', '2K', '3K', '4K'];
 export type ImageSize = typeof IMAGE_SIZES[number];
-export declare const IMAGE_RATIOS: readonly ["1:1", "3:4", "4:3", "16:9", "9:16", "2:3", "3:2", "21:9"];
+export declare const IMAGE_RATIOS: readonly ['1:1', '3:4', '4:3', '16:9', '9:16', '2:3', '3:2', '21:9'];
 export type ImageRatio = typeof IMAGE_RATIOS[number];
 export interface AgnesImageRequest {
     model: ImageModel;
@@ -52,11 +52,11 @@ export interface AgnesImageResponse {
         revised_prompt: string | null;
     }>;
 }
-export declare const VIDEO_MODES: readonly ["ti2vid", "keyframes", "text", "reference"];
+export declare const VIDEO_MODES: readonly ['ti2vid', 'keyframes', 'text', 'reference'];
 export type VideoMode = typeof VIDEO_MODES[number];
-export declare const VIDEO_RESOLUTIONS: readonly ["480p", "720p", "1080p", "1K", "2K"];
+export declare const VIDEO_RESOLUTIONS: readonly ['480p', '720p', '1080p', '1K', '2K'];
 export type VideoResolution = typeof VIDEO_RESOLUTIONS[number];
-export declare const VIDEO_RATIOS: readonly ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"];
+export declare const VIDEO_RATIOS: readonly ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'];
 export type VideoRatio = typeof VIDEO_RATIOS[number];
 export interface AgnesVideoRequest {
     model: VideoModel;
