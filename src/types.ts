@@ -22,11 +22,11 @@ export type TextModel = typeof TEXT_MODELS[number];
 export const IMAGE_MODELS = ['agnes-image-2.1-flash', 'agnes-image-2.5-flash'] as const;
 export type ImageModel = typeof IMAGE_MODELS[number];
 
-/** Video generation models */
-export const VIDEO_FREE_MODELS = ['agnes-video-v2.0', 'agnes-video-25-flash'] as const;
+/** Video generation models. `agnes-video-v2.0` was retired upstream and removed. */
+export const VIDEO_FREE_MODELS = ['agnes-video-2.5-flash'] as const;
 export type VideoFreeModel = typeof VIDEO_FREE_MODELS[number];
 
-export const VIDEO_PAID_MODELS = ['agnes-video-25'] as const;
+export const VIDEO_PAID_MODELS = ['agnes-video-2.5'] as const;
 export type VideoPaidModel = typeof VIDEO_PAID_MODELS[number];
 
 export const VIDEO_MODELS = [...VIDEO_FREE_MODELS, ...VIDEO_PAID_MODELS] as const;
@@ -83,33 +83,44 @@ export interface AgnesImageResponse {
 // Video Generation Types
 // ============================================================================
 
-export const VIDEO_MODES = ['ti2vid', 'keyframes', 'text', 'reference'] as const;
+/** 2.5 / 2.5 Flash 的生成模式。v2.0 的 `ti2vid` / `keyframes` 已废弃。 */
+export const VIDEO_MODES = ['text', 'keyframe', 'reference'] as const;
 export type VideoMode = typeof VIDEO_MODES[number];
 
-export const VIDEO_RESOLUTIONS = ['480p', '720p', '1080p', '1K', '2K'] as const;
+/** 输出分辨率档位。Flash 仅支持 `720P`。 */
+export const VIDEO_RESOLUTIONS = ['720P', '1080P', '1K', '2K'] as const;
 export type VideoResolution = typeof VIDEO_RESOLUTIONS[number];
 
 export const VIDEO_RATIOS = ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'] as const;
 export type VideoRatio = typeof VIDEO_RATIOS[number];
 
+/** 参考视频条目（`reference` 模式的 `videos[]`）。 */
+export interface AgnesVideoReference {
+  url: string;
+  start_seconds?: number;
+  require_audio?: boolean;
+}
+
 export interface AgnesVideoRequest {
   model: VideoModel;
   prompt: string;
-  seconds?: string;
+  /** 生成模式；默认 `text`。 */
   mode?: VideoMode;
+  /** 字符串 `"4"`–`"12"`，默认 `"5"`。 */
+  seconds?: string;
   size?: VideoResolution;
   aspect_ratio?: VideoRatio;
-  image?: string;
-  num_frames?: number;
-  frame_rate?: number;
   seed?: number;
-  negative_prompt?: string;
-  extra_body?: {
-    image?: string[];
-    mode?: VideoMode;
-    videos?: string[];
-    audios?: string[];
-  };
+  /** `keyframe` 模式：首帧图片 URL（与 last_frame 至少提供一个）。 */
+  first_frame?: string;
+  /** `keyframe` 模式：尾帧图片 URL。 */
+  last_frame?: string;
+  /** `reference` 模式：参考图片 URL 列表（2.5 最多 8 张，Flash 最多 5 张）。 */
+  images?: string[];
+  /** `reference` 模式：参考音频 URL 列表（Flash 最多 3 段）。 */
+  audios?: string[];
+  /** `reference` 模式：参考视频列表（2.5 最多 1 个；Flash 不支持）。 */
+  videos?: AgnesVideoReference[];
 }
 
 export interface AgnesVideoTaskResponse {
@@ -121,23 +132,18 @@ export interface AgnesVideoTaskResponse {
   status: 'queued' | 'in_progress' | 'completed' | 'failed';
   progress: number;
   created_at: number;
-  completed_at?: number;
+  started_at?: number | null;
+  completed_at?: number | null;
+  expires_at?: number | null;
   seconds: string;
   size: string;
-  metadata?: {
-    size_mapping?: {
-      adjusted: boolean;
-      height: number;
-      width: number;
-      ratio: VideoRatio;
-      resolution: VideoResolution;
-      requested_height?: number;
-      requested_width?: number;
-      message?: string;
-    };
-    url: string;
-  };
-  error?: null | object;
+  quality?: string;
+  /** 完成时顶层字段即视频地址（v2.0 的 `metadata.url` 已废弃）。 */
+  url?: string;
+  /** 内部字段，不用于判断是否完成。 */
+  internal_status?: string;
+  internal_progress?: number;
+  error?: null | { message?: string } | object;
 }
 
 // ============================================================================
@@ -287,22 +293,15 @@ export const AGNES_MODEL_PRICING: AgnesModelPricing[] = [
   },
   // Video Models - Free
   {
-    id: 'agnes-video-v2.0',
-    name: 'Agnes Video V2.0',
-    isFree: true,
-    category: 'video',
-    description: '免费·文生视频·图生视频·关键帧动画',
-  },
-  {
-    id: 'agnes-video-25-flash',
+    id: 'agnes-video-2.5-flash',
     name: 'Agnes Video 2.5 Flash',
     isFree: true,
     category: 'video',
-    description: '免费·异步任务API·720P专享',
+    description: '限时免费·异步任务API·720P专享·文生视频·首尾帧控制·图片/音频参考',
   },
   // Video Models - Paid
   {
-    id: 'agnes-video-25',
+    id: 'agnes-video-2.5',
     name: 'Agnes Video 2.5',
     isFree: false,
     category: 'video',
@@ -310,7 +309,7 @@ export const AGNES_MODEL_PRICING: AgnesModelPricing[] = [
     pricing: {
       '720P': '¥0.15/秒',
       '1080P': '¥0.25/秒',
-      '1K': '¥0.35/秒',
+      '1K': '¥0.25/秒',
       '2K': '¥0.35/秒',
     },
   },

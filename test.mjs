@@ -74,7 +74,7 @@ async function testVideo() {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'agnes-video-25-flash',
+      model: 'agnes-video-2.5-flash',
       prompt: '一只猫在沙漠中漫步，夕阳西下',
       seconds: '5',
       mode: 'text',

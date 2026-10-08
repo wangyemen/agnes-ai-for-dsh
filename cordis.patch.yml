@@ -56,32 +56,28 @@
                 description: '付费·打榜模型'
                 systemPromptUpdate: in-history
 
-              # Image generation models
+              # Image generation models（支持图生图/多图合成 → 接受图片输入）
               - id: agnes-image-2.1-flash
                 name: 'Agnes Image 2.1 Flash'
-                input: ['text']
+                input: ['text', 'image']
                 description: '免费·文生图·图生图·多图合成'
 
               - id: agnes-image-2.5-flash
                 name: 'Agnes Image 2.5 Flash'
-                input: ['text']
+                input: ['text', 'image']
                 description: '免费·最新一代图像模型'
 
               # Video generation models
-              - id: agnes-video-v2.0
-                name: 'Agnes Video V2.0'
-                input: ['text']
-                description: '免费·文生视频·图生视频·关键帧动画'
-
-              - id: agnes-video-25-flash
+              # 注意：agnes-video-v2.0 已被官方下线，不要再加回来。
+              - id: agnes-video-2.5-flash
                 name: 'Agnes Video 2.5 Flash'
                 input: ['text']
-                description: '免费·异步任务API·720P专享'
+                description: '限时免费·异步任务API·720P专享'
 
-              - id: agnes-video-25
+              - id: agnes-video-2.5
                 name: 'Agnes Video 2.5'
                 input: ['text']
-                description: '付费·多分辨率·首尾帧控制'
+                description: '付费·多分辨率·首尾帧控制·多模态参考'
 - insert:
     # GUI Settings Panel
     - id: agnes-ai-settings

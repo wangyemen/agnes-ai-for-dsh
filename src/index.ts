@@ -93,24 +93,17 @@ export const AGNES_IMAGE_MODELS: AgnesModelEntry[] = [
 
 export const AGNES_VIDEO_MODELS: AgnesModelEntry[] = [
   {
-    id: 'agnes-video-v2.0',
-    name: 'Agnes Video V2.0',
-    image: false,
-    description: '免费·文生视频·图生视频·关键帧动画',
-    pricing: 'free',
-  },
-  {
-    id: 'agnes-video-25-flash',
+    id: 'agnes-video-2.5-flash',
     name: 'Agnes Video 2.5 Flash',
     image: false,
-    description: '免费·异步任务API·720P专享',
+    description: '限时免费·异步任务API·720P专享',
     pricing: 'free',
   },
   {
-    id: 'agnes-video-25',
+    id: 'agnes-video-2.5',
     name: 'Agnes Video 2.5',
     image: false,
-    description: '付费·多分辨率·首尾帧控制',
+    description: '付费·多分辨率·首尾帧控制·多模态参考',
     pricing: 'paid',
   },
 ]
@@ -195,13 +188,21 @@ function makeRecordId(): string {
 // URL Detection helpers (用于 auto-detect pwsh/curl 输出中的 Agnes URL)
 // ============================================================================
 
+/**
+ * Agnes 输出 CDN 域名。官方先后用过两个域名：
+ * - `cos-platform-outputs.agnes-ai.cn`（当前文档图片示例）
+ * - `platform-outputs.agnes-ai.space`（v2.0 文档视频示例）
+ * 两者都保留，避免换域名后 auto-detect 整条链路静默失效。
+ */
+const AGNES_OUTPUT_HOSTS = '(?:cos-platform-outputs\\.agnes-ai\\.cn|platform-outputs\\.agnes-ai\\.space)'
+
 /** Agnes 输出 CDN 域名（图片）。 */
 const AGNES_IMAGE_URL_PATTERN =
-  'https?://cos-platform-outputs\\.agnes-ai\\.cn/[^\\s"\'<>)\\]，。！？；：、]+\\.(?:png|jpg|jpeg|webp|gif)'
+  `https?://${AGNES_OUTPUT_HOSTS}/[^\\s"'<>)\\]，。！？；：、]+\\.(?:png|jpg|jpeg|webp|gif)`
 
 /** Agnes 输出 CDN 域名（视频）。 */
 const AGNES_VIDEO_URL_PATTERN =
-  'https?://cos-platform-outputs\\.agnes-ai\\.cn/[^\\s"\'<>)\\]，。！？；：、]+\\.(?:mp4|webm|mov)'
+  `https?://${AGNES_OUTPUT_HOSTS}/[^\\s"'<>)\\]，。！？；：、]+\\.(?:mp4|webm|mov)`
 
 function findAllUrls(text: string, pattern: string): string[] {
   if (!text) return []
@@ -354,12 +355,12 @@ export const AGNES_VIDEO_GENERATION_TOOL = {
     'handles creation, polling, and result recording.',
     '',
     'Args:',
-    '- model (required): "agnes-video-25-flash" (default) or others',
+    '- model (required): "agnes-video-2.5-flash" (default) or "agnes-video-2.5"',
     '- prompt (required): text description of the video',
-    '- seconds (optional): duration in seconds, default "5"',
-    '- size (optional): "480P" | "720P" | "1080P" | "1K" | "2K"',
+    '- seconds (optional): "4" to "12", default "5"',
+    '- size (optional): "720P" (Flash only supports 720P) | "1080P" | "1K" | "2K"',
     '- aspect_ratio (optional): "16:9" | "9:16" | "1:1" | "4:3" | "3:4" | "21:9"',
-    '- image (optional): input image URL for image-to-video',
+    '- image (optional): input image URL — sent as the first frame (keyframe mode)',
     '',
     'Returns: { url } on success, or { error } on failure.',
   ].join('\n'),
@@ -381,8 +382,8 @@ export const AGNES_VIDEO_GENERATION_TOOL = {
     },
     size: {
       type: 'string',
-      enum: ['480P', '720P', '1080P', '1K', '2K'],
-      description: 'Video resolution',
+      enum: ['720P', '1080P', '1K', '2K'],
+      description: 'Video resolution. agnes-video-2.5-flash only supports "720P".',
     },
     aspect_ratio: {
       type: 'string',
@@ -562,8 +563,20 @@ async function executeImageGeneration(args: any, ctx: any): Promise<unknown> {
     size: args.size || '1K',
   }
   if (args.ratio) body.ratio = args.ratio
-  if (args.image) body.image = [args.image]
-  if (args.return_base64) body.response_format = 'b64_json'
+  // 官方要求：图生图的输入图像走 `extra_body.image`（不是顶层 `image`），
+  // `response_format` 也必须在 extra_body 里，顶层放会被忽略/报错。
+  const extraBody: Record<string, unknown> = {}
+  if (args.image) extraBody.image = [args.image]
+
+  if (args.return_base64) {
+    // 文生图 base64：顶层 return_base64。
+    // 图生图 base64：extra_body.response_format = "b64_json"。
+    if (args.image) extraBody.response_format = 'b64_json'
+    else body.return_base64 = true
+  } else {
+    extraBody.response_format = 'url'
+  }
+  if (Object.keys(extraBody).length > 0) body.extra_body = extraBody
 
   try {
     const resp = await fetch(`${AGNES_BASE_URL_CN}/images/generations`, {
@@ -606,17 +619,22 @@ async function executeVideoGeneration(
     }
   }
 
-  const modelName = args.model || 'agnes-video-25-flash'
+  const modelName: string = args.model || 'agnes-video-2.5-flash'
+  const isFlash = modelName === 'agnes-video-2.5-flash'
+
+  // Flash 固定 720P；传其他值会返回 HTTP 400 "size must be 720P"。
+  const size = isFlash ? '720P' : args.size || '720P'
 
   const body: any = {
     model: modelName,
     prompt: args.prompt,
-    seconds: args.seconds || '5',
-    size: args.size || '720P',
+    // 图生视频走 keyframe 模式：首帧由 first_frame 提供，不是顶层 image。
+    mode: args.image ? 'keyframe' : 'text',
+    seconds: String(args.seconds || '5'),
+    size,
     aspect_ratio: args.aspect_ratio || '16:9',
-    mode: args.image ? 'image' : 'text',
   }
-  if (args.image) body.image = args.image
+  if (args.image) body.first_frame = args.image
 
   let videoId: string | null = null
   try {
@@ -660,16 +678,26 @@ async function executeVideoGeneration(
       const status = data?.status
 
       if (status === 'completed' || status === 'succeeded' || status === 'success') {
-        const url = data?.metadata?.url ?? data?.url ?? data?.video_url
+        // 2.5 / 2.5 Flash 完成时把地址放在顶层 `url`（v2.0 时代的 metadata.url 已废弃）。
+        const url = data?.url ?? data?.metadata?.url ?? data?.video_url
         if (!url) return { error: 'Video completed but no URL returned.' }
         return { url }
       }
 
       if (status === 'failed' || status === 'error') {
-        return { error: `Video generation failed: ${data?.error || data?.message || 'unknown'}` }
+        const detail =
+          (data?.error && (data.error.message || JSON.stringify(data.error))) ||
+          data?.message ||
+          'unknown'
+        return { error: `Video generation failed: ${detail}` }
       }
 
-      await onProgress?.(progress, 'processing')
+      // 服务端返回真实进度时优先采用。
+      const serverProgress = typeof data?.progress === 'number' ? data.progress : null
+      const next = serverProgress === null
+        ? progress
+        : Math.min(95, Math.max(10, serverProgress))
+      await onProgress?.(next, 'processing')
     } catch {
       // 网络抖动，继续下一次轮询
     }
@@ -771,7 +799,7 @@ export function apply(ctx: Context): void {
           const resultText = collectTextFromResult(result)
           const combined = `${argsText}\n${resultText}`
 
-          if (combined.includes('cos-platform-outputs.agnes-ai.cn')) {
+          if (combined.includes('.agnes-ai.cn') || combined.includes('.agnes-ai.space')) {
             // eslint-disable-next-line no-console
             console.error('[agnes-ai-for-dsh] DEBUG argsText:', argsText.slice(0, 2000))
             // eslint-disable-next-line no-console
@@ -809,7 +837,7 @@ export function apply(ctx: Context): void {
               id: makeRecordId(),
               type: 'video',
               prompt,
-              model: model || 'agnes-video-25-flash',
+              model: model || 'agnes-video-2.5-flash',
               status: 'completed',
               url,
               createdAt: Date.now(),
@@ -906,7 +934,7 @@ export function apply(ctx: Context): void {
             id,
             type: 'video',
             prompt: args.prompt || '',
-            model: args.model || 'agnes-video-25-flash',
+            model: args.model || 'agnes-video-2.5-flash',
             status: 'pending',
             size: args.size,
             seconds: args.seconds,

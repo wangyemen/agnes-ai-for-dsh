@@ -14,15 +14,22 @@ export interface AgnesVideoToolConfig {
 export interface AgnesVideoGenerationOptions {
   model: string
   prompt: string
+  /** 字符串 `"4"`–`"12"`，默认 `"5"` */
   seconds?: string
-  mode?: 'ti2vid' | 'keyframes' | 'text' | 'reference'
-  size?: '480P' | '720P' | '1080P' | '1K' | '2K'
+  /** `text` | `keyframe` | `reference` */
+  mode?: 'text' | 'keyframe' | 'reference'
+  /** Flash 仅支持 `720P` */
+  size?: '720P' | '1080P' | '1K' | '2K'
   aspectRatio?: '16:9' | '9:16' | '1:1' | '4:3' | '3:4' | '21:9'
-  image?: string
-  numFrames?: number
-  frameRate?: number
+  /** `keyframe` 模式首帧 */
+  firstFrame?: string
+  /** `keyframe` 模式尾帧 */
+  lastFrame?: string
+  /** `reference` 模式参考图片 */
+  images?: string[]
+  /** `reference` 模式参考音频 */
+  audios?: string[]
   seed?: number
-  negativePrompt?: string
 }
 
 export interface AgnesVideoTaskResponse {
@@ -43,37 +50,31 @@ export async function generateVideo(
   options: AgnesVideoGenerationOptions,
   config: AgnesVideoToolConfig,
 ): Promise<AgnesVideoTaskResponse> {
-  const { model, prompt, seconds, mode, size, aspectRatio, image, negativePrompt } = options;
+  const { model, prompt, seconds, mode, size, aspectRatio, firstFrame, lastFrame, images, audios, seed } = options;
 
   try {
     const requestBody: Record<string, unknown> = {
       model,
       prompt,
+      mode: mode ?? (firstFrame || lastFrame ? 'keyframe' : 'text'),
     };
 
     if (seconds) {
       requestBody.seconds = seconds;
     }
 
-    if (mode) {
-      requestBody.mode = mode;
-    }
-
-    if (size) {
-      requestBody.size = size;
-    }
+    // Flash 固定 720P，其他档位会被服务端以 400 拒绝。
+    requestBody.size = model === 'agnes-video-2.5-flash' ? '720P' : size ?? '720P';
 
     if (aspectRatio) {
       requestBody.aspect_ratio = aspectRatio;
     }
 
-    if (image) {
-      requestBody.image = image;
-    }
-
-    if (negativePrompt) {
-      requestBody.negative_prompt = negativePrompt;
-    }
+    if (firstFrame) requestBody.first_frame = firstFrame;
+    if (lastFrame) requestBody.last_frame = lastFrame;
+    if (images?.length) requestBody.images = images;
+    if (audios?.length) requestBody.audios = audios;
+    if (typeof seed === 'number') requestBody.seed = seed;
 
     const response = await fetch(`${config.baseURL}/videos`, {
       method: 'POST',
@@ -105,7 +106,8 @@ export async function generateVideo(
         videoId: data.video_id,
         status: data.status,
         progress: data.progress,
-        videoUrl: data.metadata?.url,
+        // 顶层 `url` 是 2.5 系列的地址字段。
+        videoUrl: data.url ?? data.metadata?.url,
       };
     }
 
@@ -118,28 +120,34 @@ export async function generateVideo(
 
 /**
  * Poll for video generation completion.
- * Returns the final video URL when complete.
+ *
+ * 官方推荐 `GET /agnesapi?video_id=<VIDEO_ID>&model_name=<MODEL>`：它适用于
+ * `text`、`keyframe`、`reference` 全部模式；不带 `model_name` 的纯 `video_id`
+ * 查询仅适用于 `mode: "text"`。所以这里总是带上 model。
  */
 export async function pollVideoStatus(
-  taskId: string,
+  videoId: string,
   config: AgnesVideoToolConfig,
-  pollIntervalMs = 3000,
-  maxAttempts = 60,
+  model: string,
+  pollIntervalMs = 2000,
+  maxAttempts = 90,
 ): Promise<AgnesVideoTaskResponse> {
+  const origin = config.baseURL.replace(/\/v1\/?$/, '');
+
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
 
     try {
-      const response = await fetch(
-        `${config.baseURL}/videos/${taskId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${config.apiKey}`,
-          },
-        },
-      );
+      const url =
+        `${origin}/agnesapi?video_id=${encodeURIComponent(videoId)}` +
+        `&model_name=${encodeURIComponent(model)}`;
+
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${config.apiKey}` },
+      });
 
       if (!response.ok) {
+        // 429 / 网络抖动：退避后重试，不要当成失败。
         continue;
       }
 
@@ -148,36 +156,33 @@ export async function pollVideoStatus(
       if (data.status === 'completed') {
         return {
           success: true,
-          taskId,
-          videoUrl: data.metadata?.url,
+          taskId: data.task_id || data.id,
+          videoUrl: data.url ?? data.metadata?.url,
           status: 'completed',
         };
       }
 
       if (data.status === 'failed') {
+        const message =
+          (data.error && (data.error.message || JSON.stringify(data.error))) ||
+          'Video generation failed';
         return {
           success: false,
-          taskId,
+          taskId: data.task_id || data.id,
           status: 'failed',
-          error: data.error ? JSON.stringify(data.error) : 'Video generation failed',
+          error: message,
         };
       }
 
-      // Still in progress
-      return {
-        success: true,
-        taskId,
-        status: data.status,
-        progress: data.progress,
-      };
+      // 仍未完成 —— 继续下一次轮询（旧实现在这里就 return 了，等于从不轮询）。
     } catch {
-      // Retry
+      // 网络抖动，继续下一次轮询
     }
   }
 
   return {
     success: false,
-    taskId,
+    taskId: videoId,
     error: 'Video generation timed out',
   };
 }

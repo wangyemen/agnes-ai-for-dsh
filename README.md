@@ -23,9 +23,9 @@ This plugin integrates [Agnes AI](https://agnes-ai.cn) into DeepSeek Harness as 
 - Models: agnes-image-2.1-flash, agnes-image-2.5-flash
 
 ### Video Generation
-- `agnes_video_generation` tool for text-to-video and image-to-video
-- Async task-based generation with polling support
-- Models: agnes-video-v2.0, agnes-video-25-flash, agnes-video-25
+- `agnes_video_generation` tool for text-to-video and first/last-frame control
+- Async task-based generation: create then poll `/agnesapi` until done
+- Models: agnes-video-2.5-flash (free for now, 720P only), agnes-video-2.5 (paid, 720P/1080P/1K/2K)
 
 ### GUI Settings Panel
 - **Agnes AI button** in the DSH settings sidebar
@@ -74,7 +74,7 @@ Go to **Settings → Models** and add a new provider:
   - `agnes-3.0-flash` (Free, multimodal)
   - `agnes-2.5-pro` (Paid, multimodal)
   - `agnes-image-2.5-flash` (Free, image generation)
-  - `agnes-video-25-flash` (Free, video generation)
+  - `agnes-video-2.5-flash` (Free, video generation)
 
 ### 3. Set API Key
 
@@ -138,9 +138,10 @@ The agent can use the `agnes_video_generation` tool:
 ### Video Models
 | Model | Price | Description |
 |-------|-------|-------------|
-| agnes-video-v2.0 | Free | Text/Image to video |
-| agnes-video-25-flash | Free | Async API, 720P |
-| agnes-video-25 | Paid | Multi-resolution |
+| agnes-video-2.5-flash | Free (limited time) | Async API, 720P only |
+| agnes-video-2.5 | Paid | Multi-resolution, first/last-frame control |
+
+> `agnes-video-v2.0` has been retired upstream and was removed from this plugin.
 
 ## API Documentation
 

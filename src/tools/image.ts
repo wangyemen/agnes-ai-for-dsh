@@ -48,13 +48,17 @@ export async function generateImage(
       requestBody.ratio = ratio;
     }
 
-    if (image && image.length > 0) {
-      requestBody.image = image;
-    }
-
+    // 官方要求：图生图的输入图像走 `extra_body.image`（顶层 `image` 不生效），
+    // `response_format` 同理必须放在 extra_body。
+    const extraBody: Record<string, unknown> = {};
+    if (image && image.length > 0) extraBody.image = image;
     if (returnBase64) {
-      requestBody.return_base64 = true;
+      if (image && image.length > 0) extraBody.response_format = 'b64_json';
+      else requestBody.return_base64 = true;
+    } else {
+      extraBody.response_format = 'url';
     }
+    if (Object.keys(extraBody).length > 0) requestBody.extra_body = extraBody;
 
     const response = await fetch(`${config.baseURL}/images/generations`, {
       method: 'POST',

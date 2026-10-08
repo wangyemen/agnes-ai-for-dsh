@@ -23,9 +23,9 @@
 - 模型：agnes-image-2.1-flash, agnes-image-2.5-flash
 
 ### 视频生成
-- `agnes_video_generation` 工具，支持文生视频和图生视频
-- 异步任务生成，支持轮询查询
-- 模型：agnes-video-v2.0, agnes-video-25-flash, agnes-video-25
+- `agnes_video_generation` 工具，支持文生视频、首尾帧控制
+- 异步任务生成，创建后轮询 `/agnesapi` 直到完成
+- 模型：agnes-video-2.5-flash（限时免费，仅 720P）, agnes-video-2.5（付费，720P/1080P/1K/2K）
 
 ### GUI 设置面板
 - DSH 设置侧边栏中的 **Agnes AI 按钮**
@@ -74,7 +74,7 @@ pnpm 阻止构建时会显示确切的 key。
   - `agnes-3.0-flash`（免费，多模态）
   - `agnes-2.5-pro`（付费，多模态）
   - `agnes-image-2.5-flash`（免费，图像生成）
-  - `agnes-video-25-flash`（免费，视频生成）
+  - `agnes-video-2.5-flash`（限时免费，视频生成）
 
 ### 3. 设置 API Key
 
@@ -138,9 +138,10 @@ API Key 会通过 DSH 内置的凭证系统安全保存。
 ### 视频模型
 | 模型 | 价格 | 描述 |
 |------|------|------|
-| agnes-video-v2.0 | 免费 | 文生视频·图生视频 |
-| agnes-video-25-flash | 免费 | 异步API，720P |
-| agnes-video-25 | 付费 | 多分辨率 |
+| agnes-video-2.5-flash | 限时免费 | 异步API，仅 720P |
+| agnes-video-2.5 | 付费 | 多分辨率·首尾帧控制 |
+
+> `agnes-video-v2.0` 已被官方下线，已从插件中移除。
 
 ## API 文档
 
