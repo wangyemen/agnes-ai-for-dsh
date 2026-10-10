@@ -12,10 +12,18 @@ import type { Context } from '@deepseek-ai/cordis';
 /**
  * 宿主未提供 dsh-tools 时的兜底实现。
  *
- * 关键点：`parameters` 用的是 defineTool 的**自定义 DSL**（每个属性内部带
- * `required: true`），不是 JSON Schema。绝不能原样注册 —— 上游会以
- * 「工具定义不合规」拒绝整个请求。这里做等价的 DSL → JSON Schema 转换：
- * 把属性级的 `required: true` 提升为根级 `required: [...]`。
+ * 关键点：上游要求 `parameters` 是**合法的、object 为根**的 JSON Schema ——
+ * 根级 `type: "object"` + 根级 `required: [...]` 数组。属性级 `required: true`
+ * 会让服务端以 code 11129 拒绝**整个请求**（表现为「工具定义不合规」，
+ * 插件一启用模型就无法回复）。
+ *
+ * 因此这里无条件做规范化，而不是「看起来已经是 JSON Schema 就放行」：
+ * - `parameters` 是 DSL 属性表（无根 type）→ 当作属性表编译；
+ * - `parameters` 已是 object 根 JSON Schema → 仍然递归清洗属性，
+ *   把残留的属性级 `required` 提升到根级。
+ *
+ * 这样即使上游传进来的是一份手写的、带非法属性级 `required` 的
+ * raw JSON Schema，也不会被原样注册出去。
  */
 export declare function defineToolFallback(spec: any): any;
 export declare const name = "agnes-ai-for-dsh";
