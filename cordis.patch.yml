@@ -3,82 +3,82 @@
 # and image/video generation tools
 #
 # The provider is pre-configured with default settings.
-# Users only need to add their API Key through Settings → Models.
+# Users only need to add their API Key through Settings -> Models.
 # The API key is stored securely by DSH's credential system.
 #
-# To use Global endpoint: Edit the provider in Settings → Models
+# To use Global endpoint: Edit the provider in Settings -> Models
 # and change baseURL to: https://apihub.agnes-ai.com/v1
 
-- patch:
-    # LLM Provider: Agnes AI (via pi-ai adapter)
-    - id: llm-pi-ai
-      config:
-        providers:
-          agnes-ai:
-            displayName: 'Agnes AI'
-            apiKeyEnv: AGNES_AI_API_KEY
-            api: openai-completions
-            # Default to China endpoint
-            baseURL: https://api.agnes-ai.cn/v1
-            defaultInput: ['text', 'image']
-            models:
-              # Free text models with multimodal support
-              - id: agnes-2.5-flash
-                name: 'Agnes 2.5 Flash'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                input: ['text', 'image']
-                description: '免费·多模态对话·编码优化'
-                systemPromptUpdate: in-history
+# LLM Provider: Agnes AI (via pi-ai adapter)
+- id: llm-pi-ai
+  config:
+    providers:
+      agnes-ai:
+        displayName: 'Agnes AI'
+        apiKeyEnv: AGNES_AI_API_KEY
+        api: openai-completions
+        # Default to China endpoint
+        baseURL: https://api.agnes-ai.cn/v1
+        defaultInput: ['text', 'image']
+        models:
+          # Free text models with multimodal support
+          - id: agnes-2.5-flash
+            name: 'Agnes 2.5 Flash'
+            contextWindow: 524288
+            defaultMaxTokens: 65536
+            input: ['text', 'image']
+            description: '免费·多模态对话·编码优化'
+            systemPromptUpdate: in-history
 
-              - id: agnes-3.0-flash
-                name: 'Agnes 3.0 Flash'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                input: ['text', 'image']
-                description: '免费·新一代Agent编程模型'
-                systemPromptUpdate: in-history
+          - id: agnes-3.0-flash
+            name: 'Agnes 3.0 Flash'
+            contextWindow: 524288
+            defaultMaxTokens: 65536
+            input: ['text', 'image']
+            description: '免费·新一代Agent编程模型'
+            systemPromptUpdate: in-history
 
-              # Paid text models
-              - id: agnes-2.5-pro
-                name: 'Agnes 2.5 Pro'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                input: ['text', 'image']
-                description: '付费·高级推理·科学计算'
-                systemPromptUpdate: in-history
+          # Paid text models
+          - id: agnes-2.5-pro
+            name: 'Agnes 2.5 Pro'
+            contextWindow: 524288
+            defaultMaxTokens: 65536
+            input: ['text', 'image']
+            description: '付费·高级推理·科学计算'
+            systemPromptUpdate: in-history
 
-              - id: agnes-2.5-pro-beta
-                name: 'Agnes 2.5 Pro Beta'
-                contextWindow: 524288
-                defaultMaxTokens: 65536
-                input: ['text', 'image']
-                description: '付费·打榜模型'
-                systemPromptUpdate: in-history
+          - id: agnes-2.5-pro-beta
+            name: 'Agnes 2.5 Pro Beta'
+            contextWindow: 524288
+            defaultMaxTokens: 65536
+            input: ['text', 'image']
+            description: '付费·打榜模型'
+            systemPromptUpdate: in-history
 
-              # Image generation models（支持图生图/多图合成 → 接受图片输入）
-              - id: agnes-image-2.1-flash
-                name: 'Agnes Image 2.1 Flash'
-                input: ['text', 'image']
-                description: '免费·文生图·图生图·多图合成'
+          # Image generation models (支持图生图/多图合成 -> 接受图片输入)
+          - id: agnes-image-2.1-flash
+            name: 'Agnes Image 2.1 Flash'
+            input: ['text', 'image']
+            description: '免费·文生图·图生图·多图合成'
 
-              - id: agnes-image-2.5-flash
-                name: 'Agnes Image 2.5 Flash'
-                input: ['text', 'image']
-                description: '免费·最新一代图像模型'
+          - id: agnes-image-2.5-flash
+            name: 'Agnes Image 2.5 Flash'
+            input: ['text', 'image']
+            description: '免费·最新一代图像模型'
 
-              # Video generation models
-              # 注意：agnes-video-v2.0 已被官方下线，不要再加回来。
-              - id: agnes-video-2.5-flash
-                name: 'Agnes Video 2.5 Flash'
-                input: ['text']
-                description: '限时免费·异步任务API·720P专享'
+          # Video generation models
+          # 注意：agnes-video-v2.0 已被官方下线，不要再加回来。
+          - id: agnes-video-2.5-flash
+            name: 'Agnes Video 2.5 Flash'
+            input: ['text']
+            description: '限时免费·异步任务API·720P专享'
 
-              - id: agnes-video-2.5
-                name: 'Agnes Video 2.5'
-                input: ['text']
-                description: '付费·多分辨率·首尾帧控制·多模态参考'
+          - id: agnes-video-2.5
+            name: 'Agnes Video 2.5'
+            input: ['text']
+            description: '付费·多分辨率·首尾帧控制·多模态参考'
+
+# GUI Settings Panel
 - insert:
-    # GUI Settings Panel
     - id: agnes-ai-settings
       name: 'agnes-ai-for-dsh'

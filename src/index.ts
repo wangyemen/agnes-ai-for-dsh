@@ -714,19 +714,24 @@ export function apply(ctx: Context): void {
   // eslint-disable-next-line no-console
   console.error('[agnes-ai-for-dsh] apply() invoked')
 
-  ctx.inject(['tools', 'settings'], (sctx: any) => {
+  // 'settings' 是可选服务：某些 runtime / profile 不提供它。
+  // 若放进 ctx.inject 的依赖数组，插件会永远 pending，
+  // 最终让 boot 判定 "entry did not activate" 而整体失败（桌面版曾因此崩溃）。
+  // 只把 'tools' 作为必需依赖，settings 在回调内运行时探测。
+  ctx.inject(['tools'], (sctx: any) => {
     // eslint-disable-next-line no-console
     console.error('[agnes-ai-for-dsh] inject callback fired')
 
-    // ---- 注册 records settings namespace ----
+    // ---- 注册 records settings namespace（settings 可选）----
     let recordsScope: any = null
     try {
+      if (!sctx.settings) throw new Error('settings service unavailable')
       recordsScope = sctx.settings.register(AGNES_RECORDS_NS, RecordsSchema)
       // eslint-disable-next-line no-console
       console.error('[agnes-ai-for-dsh] register OK')
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('[agnes-ai-for-dsh] register FAILED:', err)
+      console.warn('[agnes-ai-for-dsh] settings unavailable, records disabled:', err)
     }
 
     function loadRecords(): GenerationRecord[] {
