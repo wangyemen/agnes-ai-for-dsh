@@ -10,6 +10,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
+import { createRequire } from 'node:module'
 import z from '@deepseek-ai/schemastery'
 
 /**
@@ -17,20 +18,67 @@ import z from '@deepseek-ai/schemastery'
  * 如 dsh-agent / dsh-llm / dsh-scope 等），不适合作为普通依赖打包：
  * 一旦打进依赖树，干净安装会因缺少这些 peer 而加载失败。
  * 因此改为运行时可选加载：宿主提供就用它的 defineTool，
- * 否则退回一个等价的轻量实现（工具注册仍然生效）。
+ * 否则退回下面那个等价的轻量实现。
+ *
+ * 注意：本文件是 ESM（`import` 语法），而 ESM 里**没有**裸 `require`。
+ * 早先直接写 `require('@deepseek-ai/dsh-tools')` 会抛
+ * `ReferenceError: require is not defined`，被 catch 吞掉后静默退化成
+ * fallback —— 而 fallback 当时是恒等函数，于是把自定义的 DSL 参数表
+ * 当成 JSON Schema 原样注册出去，模型侧直接以
+ * 「工具定义不合规」(HTTP 400) 拒绝**整个请求**，表现就是插件一启用
+ * 模型就报错。必须用 createRequire 从 import.meta.url 取 require。
  */
+const nodeRequire = createRequire(import.meta.url)
+
 let defineTool: ((spec: any) => any) | null = null
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const mod = require('@deepseek-ai/dsh-tools')
+  const mod = nodeRequire('@deepseek-ai/dsh-tools')
   defineTool = mod?.defineTool ?? null
 } catch {
   defineTool = null
 }
 
-/** 当宿主未提供 dsh-tools 时的等价兜底实现。 */
-function defineToolFallback(spec: any): any {
-  return spec
+/**
+ * 宿主未提供 dsh-tools 时的兜底实现。
+ *
+ * 关键点：`parameters` 用的是 defineTool 的**自定义 DSL**（每个属性内部带
+ * `required: true`），不是 JSON Schema。绝不能原样注册 —— 上游会以
+ * 「工具定义不合规」拒绝整个请求。这里做等价的 DSL → JSON Schema 转换：
+ * 把属性级的 `required: true` 提升为根级 `required: [...]`。
+ */
+export function defineToolFallback(spec: any): any {
+  const { parameters, output, ...rest } = spec ?? {}
+
+  // parameters 已经是 JSON Schema（带根级 type: 'object'）时直接沿用。
+  const isRawJsonSchema =
+    parameters && typeof parameters === 'object' && (parameters as any).type === 'object'
+
+  let compiledParameters: any
+  if (!parameters) {
+    compiledParameters = { type: 'object', properties: {} }
+  } else if (isRawJsonSchema) {
+    compiledParameters = parameters
+  } else {
+    const properties: Record<string, any> = {}
+    const required: string[] = []
+    for (const [key, raw] of Object.entries(parameters as Record<string, any>)) {
+      if (!raw || typeof raw !== 'object') continue
+      const { required: isRequired, ...schema } = raw as any
+      properties[key] = schema
+      if (isRequired === true) required.push(key)
+    }
+    compiledParameters = {
+      type: 'object',
+      properties,
+      ...(required.length > 0 ? { required } : {}),
+    }
+  }
+
+  return {
+    ...rest,
+    parameters: compiledParameters,
+    output: output ?? { schema: { type: 'object', additionalProperties: true, properties: {} } },
+  }
 }
 
 /** 优先用宿主的 defineTool，缺失时退回兜底实现。 */

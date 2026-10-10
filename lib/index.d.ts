@@ -9,6 +9,15 @@
  * 5. Provides model catalog and API constants
  */
 import type { Context } from '@deepseek-ai/cordis';
+/**
+ * 宿主未提供 dsh-tools 时的兜底实现。
+ *
+ * 关键点：`parameters` 用的是 defineTool 的**自定义 DSL**（每个属性内部带
+ * `required: true`），不是 JSON Schema。绝不能原样注册 —— 上游会以
+ * 「工具定义不合规」拒绝整个请求。这里做等价的 DSL → JSON Schema 转换：
+ * 把属性级的 `required: true` 提升为根级 `required: [...]`。
+ */
+export declare function defineToolFallback(spec: any): any;
 export declare const name = "agnes-ai-for-dsh";
 export interface AgnesModelEntry {
     id: string;
