@@ -11,7 +11,31 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+
+/**
+ * `@deepseek-ai/dsh-tools` 是宿主提供的包（它自身带 9 个 optional peer，
+ * 如 dsh-agent / dsh-llm / dsh-scope 等），不适合作为普通依赖打包：
+ * 一旦打进依赖树，干净安装会因缺少这些 peer 而加载失败。
+ * 因此改为运行时可选加载：宿主提供就用它的 defineTool，
+ * 否则退回一个等价的轻量实现（工具注册仍然生效）。
+ */
+let defineTool: ((spec: any) => any) | null = null
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mod = require('@deepseek-ai/dsh-tools')
+  defineTool = mod?.defineTool ?? null
+} catch {
+  defineTool = null
+}
+
+/** 当宿主未提供 dsh-tools 时的等价兜底实现。 */
+function defineToolFallback(spec: any): any {
+  return spec
+}
+
+/** 优先用宿主的 defineTool，缺失时退回兜底实现。 */
+const defineToolImpl = (spec: any): any =>
+  (defineTool ?? defineToolFallback)(spec)
 
 export const name = 'agnes-ai-for-dsh'
 
@@ -783,7 +807,8 @@ export function apply(ctx: Context): void {
     // 模型有时会绕过我们的工具，直接用 pwsh + curl 调 Agnes API。
     // 这个 hook 不依赖模型选择，只要工具结果里出现 Agnes URL，就自动记录。
     try {
-      ctx.on('tools/execute', async (exec: any, next: any) => {
+      // 'tools/execute' 由宿主 tools 服务提供，不在基础 Events 映射里，故断言后注册。
+      ctx.on('tools/execute' as any, async (exec: any, next: any) => {
         const result = await next()
         try {
           const toolName = String(
@@ -868,7 +893,7 @@ export function apply(ctx: Context): void {
 
     // ---- 图片生成工具 ----
     try {
-      sctx.tools.register(defineTool({
+      sctx.tools.register(defineToolImpl({
         name: AGNES_IMAGE_GENERATION_TOOL.name,
         description: AGNES_IMAGE_GENERATION_TOOL.description,
         parameters: AGNES_IMAGE_GENERATION_TOOL.parameters as any,
@@ -920,7 +945,7 @@ export function apply(ctx: Context): void {
 
     // ---- 视频生成工具 ----
     try {
-      sctx.tools.register(defineTool({
+      sctx.tools.register(defineToolImpl({
         name: AGNES_VIDEO_GENERATION_TOOL.name,
         description: AGNES_VIDEO_GENERATION_TOOL.description,
         parameters: AGNES_VIDEO_GENERATION_TOOL.parameters as any,
@@ -978,7 +1003,7 @@ export function apply(ctx: Context): void {
 
     // ---- 记录登记工具（保留作为显式路径） ----
     try {
-      sctx.tools.register(defineTool({
+      sctx.tools.register(defineToolImpl({
         name: AGNES_RECORD_GENERATION_TOOL.name,
         description: AGNES_RECORD_GENERATION_TOOL.description,
         parameters: AGNES_RECORD_GENERATION_TOOL.parameters as any,
