@@ -13,8 +13,6 @@
     "outDir": "./lib",
     "rootDir": "./src",
     "resolveJsonModule": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
     "types": ["node"]
   },
   "include": ["src/**/*"],

@@ -1,153 +1,100 @@
-# DeepSeek Harness 用 Agnes AI 插件
+# agnes-ai-for-dsh
 
-[English](README.md) | 中文
+[DeepSeek Harness](https://github.com/deepseek-ai/dsh) 的 Agnes AI 集成插件 ——
+提供 LLM 供应商接入（多模态）、图像/视频生成工具，以及设置面板。
 
-## 概述
+[English](README.md)
 
-本插件将 [Agnes AI](https://agnes-ai.cn) 集成到 DeepSeek Harness，作为：
-1. **LLM 提供商** - 支持多模态（图像理解）
-2. **工具** - 图像和视频生成
-3. **GUI 设置面板** - DSH 设置中的 Agnes AI 专属侧边栏
+## 功能
 
-## 功能特性
-
-### LLM 提供商 (agnes-ai)
-- 多模态对话，支持图像理解
-- 多种模型：Flash（免费）、Pro（付费）
-- OpenAI 兼容 API (`openai-completions`)
-- 流式响应
-- 思考模式支持
-
-### 图像生成
-- `agnes_image_generation` 工具，支持文生图和图生图
-- 模型：agnes-image-2.1-flash, agnes-image-2.5-flash
-
-### 视频生成
-- `agnes_video_generation` 工具，支持文生视频、首尾帧控制
-- 异步任务生成，创建后轮询 `/agnesapi` 直到完成
-- 模型：agnes-video-2.5-flash（限时免费，仅 720P）, agnes-video-2.5（付费，720P/1080P/1K/2K）
-
-### GUI 设置面板
-- DSH 设置侧边栏中的 **Agnes AI 按钮**
-- 自动检测 `agnes-ai` 提供商配置状态
-- 显示已配置的模型及其状态
-- 为新用户提供添加指南
+| 组成 | 说明 |
+| --- | --- |
+| **供应商** | `agnes-ai`，通过 `llm-pi-ai` 适配器接入（OpenAI 兼容 Chat Completions） |
+| **对话模型** | `agnes-2.5-flash`、`agnes-3.0-flash`、`agnes-2.5-pro`、`agnes-2.5-pro-beta`，均支持图像输入 |
+| **工具** | `agnes_image_generation`、`agnes_video_generation`、`agnes_record_generation` |
+| **设置面板** | 在「设置」中新增 **Agnes AI** 分区，展示实时配置与模型目录 |
 
 ## 安装
 
 ```bash
-# 从 GitHub（测试用）
-dsh plugin --profile web add "git+https://github.com/wangyemen/agnes-ai-for-dsh.git"
-
-# 从 npm（发布后）
-dsh plugin --profile web add agnes-ai-for-dsh
+dsh plugin install agnes-ai-for-dsh
 ```
+
+或在 profile 的 `package.json` 中加入依赖后重新安装：
+
+```json
+{
+  "dependencies": {
+    "agnes-ai-for-dsh": "git+https://github.com/wangyemen/agnes-ai-for-dsh.git"
+  }
+}
+```
+
+然后把该 bundle 加入 `dsh.profile.bundles`，并重启 DSH。
 
 ## 配置
 
-### 1. 允许构建脚本（首次安装）
+供应商已由 `cordis.patch.yml` 预声明，因此只需提供 API Key：
 
-首次安装插件时，pnpm 会因安全原因阻止构建脚本。您需要将包添加到允许列表：
+1. 打开 **设置 → 模型**。
+2. 找到 **Agnes AI**，填入 API Key。
+3. Key 由 DSH 凭据系统保存，引用名为 `AGNES_AI_API_KEY`。
 
-打开 `D:\dsh\home\profiles\web\pnpm-workspace.yaml` 并添加：
+默认使用中国站端点：
 
-```yaml
-allowBuilds:
-  'agnes-ai-for-dsh@https://codeload.github.com/wangyemen/agnes-ai-for-dsh/tar.gz/<commit-hash>': true
+```
+https://api.agnes-ai.cn/v1
 ```
 
-pnpm 阻止构建时会显示确切的 key。
+如需国际站，把 `baseURL` 改为 `https://apihub.agnes-ai.com/v1` —— 可在
+`cordis.patch.yml` 中修改，也可直接在「设置 → 模型」里改。
 
-### 2. 添加提供商（自动或手动）
+## 使用
 
-**自动（通过插件）：**
-插件通过 `cordis.patch.yml` 自动注入 `agnes-ai` 提供商配置。
+启用后，模型即可调用两个媒体工具：
 
-**手动：**
-进入 **设置 → 模型**，添加新提供商：
-- **提供商 ID**: `agnes-ai`
-- **显示名称**: `Agnes AI`
-- **API**: `openai-completions`
-- **基础 URL**: `https://api.agnes-ai.cn/v1`（中国站）或 `https://apihub.agnes-ai.com/v1`（国际站）
-- **模型**:
-  - `agnes-2.5-flash`（免费，多模态）
-  - `agnes-3.0-flash`（免费，多模态）
-  - `agnes-2.5-pro`（付费，多模态）
-  - `agnes-image-2.5-flash`（免费，图像生成）
-  - `agnes-video-2.5-flash`（限时免费，视频生成）
+- **`agnes_image_generation`** —— 文生图、图生图、多图合成。参数：
+  `model`、`prompt`、`size`（`1K`–`4K`）、可选 `ratio`、可选 `image`（输入图 URL）、
+  可选 `return_base64`。
+- **`agnes_video_generation`** —— 异步视频生成并自动轮询。参数：
+  `model`、`prompt`，可选 `seconds`、`mode`、`size`、`aspect_ratio`
+  以及各模式专属的媒体字段。
 
-### 3. 设置 API Key
+视频为异步任务：工具先创建任务，再轮询
+`GET /agnesapi?video_id=…&model_name=…` 直至完成。`agnes-video-2.5-flash`
+仅支持 `720P`；`agnes-video-2.5` 支持 `720P`、`1080P`、`1K`、`2K`。
 
-**重要：** 您不需要手动设置环境变量。DSH 的设置界面会自动处理。
+## 维护者须知
 
-1. 进入 **设置 → 模型**
-2. 在提供商列表中找到 **Agnes AI**
-3. 在 **API Key** 字段输入您的 API 密钥
-4. 点击 **保存**
+### 工具 schema
 
-API Key 会通过 DSH 内置的凭证系统安全保存。
+宿主的 `defineTool` **不接受**原生 JSON Schema —— 它要求一种「属性表 DSL」，
+每个条目可自带 `required: true`，由它自己编译成 object 为根的 JSON Schema。
 
-### 4. 使用 Agnes AI 设置面板
+该 DSL **不是合法 JSON Schema**。一旦未经转换就发给供应商，供应商会拒绝
+**整个请求**（WorkBuddy 返回 HTTP 400，code 11129，「工具定义不合规」），
+于是该会话的每一次模型回复都失败，而不只是那一个工具。这不是假设：
+ESM 模块里的裸 `require()` 抛错被静默吞掉、由恒等 fallback 原样注册 DSL，
+就是这样发生的一次真实事故。
 
-1. 点击设置侧边栏中的 **Agnes AI** 按钮
-2. 如果未配置，将看到添加提供商的引导
-3. 如果已配置，将看到：
-   - 提供商状态（已配置/未配置）
-   - API Key 状态
-   - 所有可用模型列表
-   - 模型分类（文本/图像/视频）
+防线在 `src/tools.ts`：
 
-## 使用方式
+- `compileParameters()` 在本插件内完成编译，正确性不依赖宿主 helper。
+- `assertValidCompiledSchema()` / `assertAllToolSchemas()` 在加载时校验
+  **编译后**的形状，非法即抛错 —— 让错误在插件启动时暴露，而不是污染每个请求。
+- 注册前会复查 `defineTool` 实际产出的参数，若原始 DSL 残留则拒绝注册。
 
-### 带图像理解的文本对话
+`verify.mjs` 会用真实 `defineTool` 完整验证上述各点。
 
-1. 选择 Agnes AI 模型（如 `agnes-2.5-flash`）
-2. 在对话中上传图片
-3. 询问关于图像的问题
+### 构建
 
-### 生成图像
+```bash
+npm install
+npm run build
+```
 
-代理可以使用 `agnes_image_generation` 工具：
-- 用户："生成一张夕阳的图片"
-- 代理：调用 `agnes_image_generation` 工具
-- 代理：返回图像 URL
-
-### 生成视频
-
-代理可以使用 `agnes_video_generation` 工具：
-- 用户："生成一个猫走路的视频"
-- 代理：调用 `agnes_video_generation` 工具
-- 代理：返回视频任务 ID
-
-## 模型目录
-
-### 文本模型（多模态）
-| 模型 | 价格 | 上下文 | 最大输出 | 图像输入 |
-|------|------|--------|----------|----------|
-| agnes-2.5-flash | 免费 | 512K | 64K | 是 |
-| agnes-3.0-flash | 免费 | 512K | 64K | 是 |
-| agnes-2.5-pro | 付费 | 512K | 64K | 是 |
-| agnes-2.5-pro-beta | 付费 | 512K | 64K | 是 |
-
-### 图像模型
-| 模型 | 价格 | 描述 |
-|------|------|------|
-| agnes-image-2.1-flash | 免费 | 文生图·图生图 |
-| agnes-image-2.5-flash | 免费 | 最新一代 |
-
-### 视频模型
-| 模型 | 价格 | 描述 |
-|------|------|------|
-| agnes-video-2.5-flash | 限时免费 | 异步API，仅 720P |
-| agnes-video-2.5 | 付费 | 多分辨率·首尾帧控制 |
-
-> `agnes-video-v2.0` 已被官方下线，已从插件中移除。
-
-## API 文档
-
-访问 Agnes AI 平台查看 API 文档：
-- 中国站：https://platform.agnes-ai.cn/
-- 国际站：https://platform.agnes-ai.com/
+`lib/` 是提交进仓库的：本包从 git 安装，而消费方 profile 不会执行构建脚本。
+**改动 `src/` 后务必先构建再提交**，否则发布的是过期的 `lib/`。
 
 ## 许可证
 

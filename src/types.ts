@@ -1,316 +1,215 @@
 /**
- * Agnes AI Types - Complete model catalog and API types
+ * Shared types and constants for the Agnes AI plugin.
+ *
+ * Agnes exposes an OpenAI-compatible surface (see ../API/*.md):
+ *   POST /v1/chat/completions     text / multimodal chat
+ *   POST /v1/images/generations   image generation + editing
+ *   POST /v1/videos               async video task creation
+ *   GET  /agnesapi?video_id=..    async video task polling
  */
 
 // ============================================================================
-// Model Categories
+// Endpoints and regions
 // ============================================================================
 
-/** Text models that are free to use */
-export const TEXT_FREE_MODELS = ['agnes-2.5-flash', 'agnes-3.0-flash'] as const;
-export type TextFreeModel = typeof TEXT_FREE_MODELS[number];
+/** China endpoint (default). */
+export const AGNES_BASE_URL_CN = 'https://api.agnes-ai.cn/v1'
 
-/** Text models that require payment */
-export const TEXT_PAID_MODELS = ['agnes-2.5-pro', 'agnes-2.5-pro-beta'] as const;
-export type TextPaidModel = typeof TEXT_PAID_MODELS[number];
+/** Global endpoint. */
+export const AGNES_BASE_URL_GLOBAL = 'https://apihub.agnes-ai.com/v1'
 
-/** All text models */
-export const TEXT_MODELS = [...TEXT_FREE_MODELS, ...TEXT_PAID_MODELS] as const;
-export type TextModel = typeof TEXT_MODELS[number];
+export type AgnesRegion = 'cn' | 'global'
 
-/** Image generation models (all free) */
-export const IMAGE_MODELS = ['agnes-image-2.1-flash', 'agnes-image-2.5-flash'] as const;
-export type ImageModel = typeof IMAGE_MODELS[number];
-
-/** Video generation models. `agnes-video-v2.0` was retired upstream and removed. */
-export const VIDEO_FREE_MODELS = ['agnes-video-2.5-flash'] as const;
-export type VideoFreeModel = typeof VIDEO_FREE_MODELS[number];
-
-export const VIDEO_PAID_MODELS = ['agnes-video-2.5'] as const;
-export type VideoPaidModel = typeof VIDEO_PAID_MODELS[number];
-
-export const VIDEO_MODELS = [...VIDEO_FREE_MODELS, ...VIDEO_PAID_MODELS] as const;
-export type VideoModel = typeof VIDEO_MODELS[number];
-
-/** All Agnes AI models */
-export const AGNES_MODELS = [...TEXT_MODELS, ...IMAGE_MODELS, ...VIDEO_MODELS] as const;
-export type AgnesModel = typeof AGNES_MODELS[number];
-
-// ============================================================================
-// API Endpoints
-// ============================================================================
-
-export const AGNES_ENDPOINTS = {
-  CHINA: 'https://api.agnes-ai.cn/v1',
-  GLOBAL: 'https://apihub.agnes-ai.com/v1',
-} as const;
-
-export type AgnesEndpoint = typeof AGNES_ENDPOINTS[keyof typeof AGNES_ENDPOINTS];
-
-// ============================================================================
-// Image Generation Types
-// ============================================================================
-
-export const IMAGE_SIZES = ['1K', '2K', '3K', '4K'] as const;
-export type ImageSize = typeof IMAGE_SIZES[number];
-
-export const IMAGE_RATIOS = ['1:1', '3:4', '4:3', '16:9', '9:16', '2:3', '3:2', '21:9'] as const;
-export type ImageRatio = typeof IMAGE_RATIOS[number];
-
-export interface AgnesImageRequest {
-  model: ImageModel;
-  prompt: string;
-  size: ImageSize;
-  ratio?: ImageRatio;
-  image?: string[];
-  return_base64?: boolean;
-  extra_body?: {
-    response_format?: 'url' | 'b64_json';
-    image?: string[];
-  };
+/** Resolve a region to its API base URL. */
+export function getAgnesBaseUrl(region: AgnesRegion = 'cn'): string {
+  return region === 'global' ? AGNES_BASE_URL_GLOBAL : AGNES_BASE_URL_CN
 }
 
-export interface AgnesImageResponse {
-  created: number;
-  data: Array<{
-    url: string | null;
-    b64_json: string | null;
-    revised_prompt: string | null;
-  }>;
+/**
+ * Strip the trailing `/v1` so a root-relative route such as
+ * `/agnesapi?video_id=...` can be built from the same base URL.
+ */
+export function getAgnesOrigin(baseURL: string): string {
+  return baseURL.replace(/\/v1\/?$/, '')
 }
 
 // ============================================================================
-// Video Generation Types
+// Provider / settings identity
 // ============================================================================
 
-/** 2.5 / 2.5 Flash 的生成模式。v2.0 的 `ti2vid` / `keyframes` 已废弃。 */
-export const VIDEO_MODES = ['text', 'keyframe', 'reference'] as const;
-export type VideoMode = typeof VIDEO_MODES[number];
+/** Provider route registered with the llm-pi-ai adapter. */
+export const AGNES_PROVIDER_ID = 'agnes-ai'
 
-/** 输出分辨率档位。Flash 仅支持 `720P`。 */
-export const VIDEO_RESOLUTIONS = ['720P', '1080P', '1K', '2K'] as const;
-export type VideoResolution = typeof VIDEO_RESOLUTIONS[number];
+/** Credential reference holding the API key. */
+export const AGNES_API_KEY_ENV = 'AGNES_AI_API_KEY'
 
-export const VIDEO_RATIOS = ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'] as const;
-export type VideoRatio = typeof VIDEO_RATIOS[number];
+/** llm-pi-ai settings namespace (the loader entry id of that plugin). */
+export const AGNES_SETTINGS_NS = 'llm-pi-ai'
 
-/** 参考视频条目（`reference` 模式的 `videos[]`）。 */
-export interface AgnesVideoReference {
-  url: string;
-  start_seconds?: number;
-  require_audio?: boolean;
-}
-
-export interface AgnesVideoRequest {
-  model: VideoModel;
-  prompt: string;
-  /** 生成模式；默认 `text`。 */
-  mode?: VideoMode;
-  /** 字符串 `"4"`–`"12"`，默认 `"5"`。 */
-  seconds?: string;
-  size?: VideoResolution;
-  aspect_ratio?: VideoRatio;
-  seed?: number;
-  /** `keyframe` 模式：首帧图片 URL（与 last_frame 至少提供一个）。 */
-  first_frame?: string;
-  /** `keyframe` 模式：尾帧图片 URL。 */
-  last_frame?: string;
-  /** `reference` 模式：参考图片 URL 列表（2.5 最多 8 张，Flash 最多 5 张）。 */
-  images?: string[];
-  /** `reference` 模式：参考音频 URL 列表（Flash 最多 3 段）。 */
-  audios?: string[];
-  /** `reference` 模式：参考视频列表（2.5 最多 1 个；Flash 不支持）。 */
-  videos?: AgnesVideoReference[];
-}
-
-export interface AgnesVideoTaskResponse {
-  id: string;
-  task_id: string;
-  video_id: string;
-  object: string;
-  model: string;
-  status: 'queued' | 'in_progress' | 'completed' | 'failed';
-  progress: number;
-  created_at: number;
-  started_at?: number | null;
-  completed_at?: number | null;
-  expires_at?: number | null;
-  seconds: string;
-  size: string;
-  quality?: string;
-  /** 完成时顶层字段即视频地址（v2.0 的 `metadata.url` 已废弃）。 */
-  url?: string;
-  /** 内部字段，不用于判断是否完成。 */
-  internal_status?: string;
-  internal_progress?: number;
-  error?: null | { message?: string } | object;
-}
+/** Path of the provider block inside that namespace. */
+export const AGNES_SETTINGS_PATH = ['providers', AGNES_PROVIDER_ID] as const
 
 // ============================================================================
-// Chat/Text Types (OpenAI-compatible)
+// Model catalog
 // ============================================================================
 
-export interface AgnesChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string | Array<{
-    type: 'text' | 'image_url';
-    text?: string;
-    image_url?: { url: string };
-  }>;
+export type AgnesModelKind = 'chat' | 'image' | 'video'
+
+export interface AgnesModel {
+  id: string
+  name: string
+  kind: AgnesModelKind
+  /** Whether the model accepts image input. */
+  vision: boolean
+  /** Whether usage is currently free. */
+  free: boolean
+  description: string
+  contextWindow?: number
+  /** Default output token ceiling, chat models only. */
+  maxTokens?: number
 }
 
-export interface AgnesChatRequest {
-  model: TextModel;
-  messages: AgnesChatMessage[];
-  temperature?: number;
-  top_p?: number;
-  max_tokens?: number;
-  stream?: boolean;
-  tools?: Array<object>;
-  tool_choice?: string | object;
-  chat_template_kwargs?: {
-    enable_thinking?: boolean;
-  };
-  thinking?: {
-    type: 'enabled';
-    budget_tokens?: number;
-  };
-}
-
-export interface AgnesChatResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: Array<{
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }>;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
-
-// ============================================================================
-// Pricing Information
-// ============================================================================
-
-export interface AgnesModelPricing {
-  /** Model ID */
-  id: string;
-  /** Display name */
-  name: string;
-  /** Whether this model is free */
-  isFree: boolean;
-  /** Category: 'text' | 'image' | 'video' */
-  category: 'text' | 'image' | 'video';
-  /** Description in Chinese */
-  description: string;
-  /** Context window size in tokens (text models only) */
-  contextWindow?: number;
-  /** Maximum output tokens (text models only) */
-  maxTokens?: number;
-  /** Supports image input (text models only) */
-  supportsImageInput?: boolean;
-  /** Pricing info for paid models */
-  pricing?: Record<string, string>;
-}
-
-/** Complete pricing catalog */
-export const AGNES_MODEL_PRICING: AgnesModelPricing[] = [
-  // Text Models - Free
+/** Chat / multimodal models. */
+export const AGNES_CHAT_MODELS: AgnesModel[] = [
   {
     id: 'agnes-2.5-flash',
     name: 'Agnes 2.5 Flash',
-    isFree: true,
-    category: 'text',
-    description: '免费·多模态对话·编码优化·智能体工作流',
+    kind: 'chat',
+    vision: true,
+    free: true,
+    description: '免费·多模态对话·编码优化',
     contextWindow: 524288,
     maxTokens: 65536,
-    supportsImageInput: true,
   },
   {
     id: 'agnes-3.0-flash',
     name: 'Agnes 3.0 Flash',
-    isFree: true,
-    category: 'text',
-    description: '免费·新一代Agent编程模型·工具调用强化',
+    kind: 'chat',
+    vision: true,
+    free: true,
+    description: '免费·新一代 Agent 编程模型',
     contextWindow: 524288,
     maxTokens: 65536,
-    supportsImageInput: true,
   },
-  // Text Models - Paid
   {
     id: 'agnes-2.5-pro',
     name: 'Agnes 2.5 Pro',
-    isFree: false,
-    category: 'text',
-    description: '付费·高级推理·科学计算·长上下文分析',
+    kind: 'chat',
+    vision: true,
+    free: false,
+    description: '付费·高级推理·科学计算',
     contextWindow: 524288,
     maxTokens: 65536,
-    supportsImageInput: true,
-    pricing: {
-      inputCacheHit: '¥0.035/百万Token',
-      input: '¥0.35/百万Token',
-      output: '¥1.00/百万Token',
-    },
   },
   {
     id: 'agnes-2.5-pro-beta',
     name: 'Agnes 2.5 Pro Beta',
-    isFree: false,
-    category: 'text',
-    description: '付费·打榜模型·Artificial Analysis评测',
+    kind: 'chat',
+    vision: true,
+    free: false,
+    description: '付费·打榜模型',
     contextWindow: 524288,
     maxTokens: 65536,
-    supportsImageInput: true,
-    pricing: {
-      inputCacheHit: '¥0.035/百万Token',
-      input: '¥0.35/百万Token',
-      output: '¥1.00/百万Token',
-    },
   },
-  // Image Models - Free
+]
+
+/** Image generation / editing models. */
+export const AGNES_IMAGE_MODELS: AgnesModel[] = [
   {
     id: 'agnes-image-2.1-flash',
     name: 'Agnes Image 2.1 Flash',
-    isFree: true,
-    category: 'image',
+    kind: 'image',
+    vision: true,
+    free: true,
     description: '免费·文生图·图生图·多图合成',
   },
   {
     id: 'agnes-image-2.5-flash',
     name: 'Agnes Image 2.5 Flash',
-    isFree: true,
-    category: 'image',
+    kind: 'image',
+    vision: true,
+    free: true,
     description: '免费·最新一代图像模型',
   },
-  // Video Models - Free
+]
+
+/**
+ * Video generation models.
+ * Note: `agnes-video-v2.0` is retired upstream — do not reintroduce it.
+ */
+export const AGNES_VIDEO_MODELS: AgnesModel[] = [
   {
     id: 'agnes-video-2.5-flash',
     name: 'Agnes Video 2.5 Flash',
-    isFree: true,
-    category: 'video',
-    description: '限时免费·异步任务API·720P专享·文生视频·首尾帧控制·图片/音频参考',
+    kind: 'video',
+    vision: false,
+    free: true,
+    description: '限时免费·异步任务·720P 专享',
   },
-  // Video Models - Paid
   {
     id: 'agnes-video-2.5',
     name: 'Agnes Video 2.5',
-    isFree: false,
-    category: 'video',
+    kind: 'video',
+    vision: false,
+    free: false,
     description: '付费·多分辨率·首尾帧控制·多模态参考',
-    pricing: {
-      '720P': '¥0.15/秒',
-      '1080P': '¥0.25/秒',
-      '1K': '¥0.25/秒',
-      '2K': '¥0.35/秒',
-    },
   },
-];
+]
+
+export const AGNES_ALL_MODELS: AgnesModel[] = [
+  ...AGNES_CHAT_MODELS,
+  ...AGNES_IMAGE_MODELS,
+  ...AGNES_VIDEO_MODELS,
+]
+
+/** Model ids for the image tool's enum. */
+export const AGNES_IMAGE_MODEL_IDS = AGNES_IMAGE_MODELS.map((m) => m.id)
+
+/** Model ids for the video tool's enum. */
+export const AGNES_VIDEO_MODEL_IDS = AGNES_VIDEO_MODELS.map((m) => m.id)
+
+// ============================================================================
+// Hard API limits, lifted from the official docs
+// ============================================================================
+
+/** Image size tiers accepted by the image endpoint. */
+export const AGNES_IMAGE_SIZES = ['1K', '2K', '3K', '4K'] as const
+
+/** Aspect ratios accepted by both media endpoints. */
+export const AGNES_RATIOS = ['1:1', '3:4', '4:3', '16:9', '9:16', '2:3', '3:2', '21:9'] as const
+
+/** Video resolutions for `agnes-video-2.5` (Flash is fixed to 720P). */
+export const AGNES_VIDEO_SIZES = ['720P', '1080P', '1K', '2K'] as const
+
+/** Video durations, as strings, inclusive. */
+export const AGNES_VIDEO_SECONDS = ['4', '5', '6', '7', '8', '9', '10', '11', '12'] as const
+
+/** Video generation modes. */
+export const AGNES_VIDEO_MODES = ['text', 'keyframe', 'reference'] as const
+
+/** One of the three documented video generation modes. */
+export type AgnesVideoMode = (typeof AGNES_VIDEO_MODES)[number]
+
+/** The one resolution `agnes-video-2.5-flash` accepts. */
+export const AGNES_VIDEO_FLASH_SIZE = '720P'
+
+// ============================================================================
+// Provider config block written into cordis.patch.yml
+// ============================================================================
+
+/** The `agnes-ai` provider entry for the llm-pi-ai adapter. */
+export const AGNES_PROVIDER_CONFIG = {
+  displayName: 'Agnes AI',
+  apiKeyEnv: AGNES_API_KEY_ENV,
+  api: 'openai-completions',
+  baseURL: AGNES_BASE_URL_CN,
+  defaultInput: ['text', 'image'],
+  models: AGNES_CHAT_MODELS.map((m) => ({
+    id: m.id,
+    name: m.name,
+    contextWindow: m.contextWindow,
+    defaultMaxTokens: m.maxTokens,
+    input: ['text', 'image'],
+    description: m.description,
+  })),
+}

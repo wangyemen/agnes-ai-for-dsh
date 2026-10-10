@@ -1,14 +1,14 @@
 /**
- * Agnes AI Client Plugin for DeepSeek Harness
+ * Agnes AI client plugin — the settings panel.
  *
- * Provides:
- * 1. A dedicated Agnes AI settings panel in the DSH sidebar
- * 2. Detection of whether the agnes-ai provider is configured
- * 3. Display of configured models and their status
- * 4. Generation records (images / videos) with progress, delete, pagination
+ * This is a DSH client bundle entry. It self-registers through the browser
+ * module table, so it must call `window.__ModuleLoader__.load({ id, factory })`.
  *
- * NOTE: This is a DSH client bundle entry. It MUST self-register via
- * `window.__ModuleLoader__.load({ id, factory })`.
+ * Provider detection reads the live configuration from the generated Remote
+ * namespace `remote.settings` (see `readProviderConfig`). A previous version
+ * read a `settingsScope` service that does not exist in DSH 0.2.0-rc.2, so the
+ * lookup always returned undefined and the panel claimed "not configured" no
+ * matter what the user had set up.
  */
 declare const moduleLoader: any;
 //# sourceMappingURL=index.d.ts.map

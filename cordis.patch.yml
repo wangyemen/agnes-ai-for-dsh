@@ -1,15 +1,12 @@
 # Agnes AI Plugin for DeepSeek Harness
-# Provides LLM provider integration with multimodal support
-# and image/video generation tools
 #
-# The provider is pre-configured with default settings.
-# Users only need to add their API Key through Settings -> Models.
-# The API key is stored securely by DSH's credential system.
+# Declares the agnes-ai provider for the llm-pi-ai adapter, plus the GUI
+# settings panel. Users only need to supply their API key through
+# Settings -> Models; DSH stores it in its own credential store.
 #
-# To use Global endpoint: Edit the provider in Settings -> Models
-# and change baseURL to: https://apihub.agnes-ai.com/v1
+# To use the Global endpoint instead, change baseURL below (or edit the
+# provider in Settings -> Models) to: https://apihub.agnes-ai.com/v1
 
-# LLM Provider: Agnes AI (via pi-ai adapter)
 - id: llm-pi-ai
   config:
     providers:
@@ -17,11 +14,10 @@
         displayName: 'Agnes AI'
         apiKeyEnv: AGNES_AI_API_KEY
         api: openai-completions
-        # Default to China endpoint
+        # Default to the China endpoint.
         baseURL: https://api.agnes-ai.cn/v1
         defaultInput: ['text', 'image']
         models:
-          # Free text models with multimodal support
           - id: agnes-2.5-flash
             name: 'Agnes 2.5 Flash'
             contextWindow: 524288
@@ -35,10 +31,9 @@
             contextWindow: 524288
             defaultMaxTokens: 65536
             input: ['text', 'image']
-            description: '免费·新一代Agent编程模型'
+            description: '免费·新一代 Agent 编程模型'
             systemPromptUpdate: in-history
 
-          # Paid text models
           - id: agnes-2.5-pro
             name: 'Agnes 2.5 Pro'
             contextWindow: 524288
@@ -55,30 +50,7 @@
             description: '付费·打榜模型'
             systemPromptUpdate: in-history
 
-          # Image generation models (支持图生图/多图合成 -> 接受图片输入)
-          - id: agnes-image-2.1-flash
-            name: 'Agnes Image 2.1 Flash'
-            input: ['text', 'image']
-            description: '免费·文生图·图生图·多图合成'
-
-          - id: agnes-image-2.5-flash
-            name: 'Agnes Image 2.5 Flash'
-            input: ['text', 'image']
-            description: '免费·最新一代图像模型'
-
-          # Video generation models
-          # 注意：agnes-video-v2.0 已被官方下线，不要再加回来。
-          - id: agnes-video-2.5-flash
-            name: 'Agnes Video 2.5 Flash'
-            input: ['text']
-            description: '限时免费·异步任务API·720P专享'
-
-          - id: agnes-video-2.5
-            name: 'Agnes Video 2.5'
-            input: ['text']
-            description: '付费·多分辨率·首尾帧控制·多模态参考'
-
-# GUI Settings Panel
+# GUI settings panel, plus the image/video generation tools.
 - insert:
     - id: agnes-ai-settings
       name: 'agnes-ai-for-dsh'

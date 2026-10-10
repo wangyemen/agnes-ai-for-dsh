@@ -1,153 +1,109 @@
-# Agnes AI Plugin for DeepSeek Harness
+# agnes-ai-for-dsh
 
-English | [中文](README.zh.md)
+Agnes AI integration for [DeepSeek Harness](https://github.com/deepseek-ai/dsh) —
+an LLM provider with multimodal support, image/video generation tools, and a
+settings panel.
 
-## Overview
+[中文说明](README.zh.md)
 
-This plugin integrates [Agnes AI](https://agnes-ai.cn) into DeepSeek Harness as both:
-1. **LLM Provider** - with multimodal support (image understanding)
-2. **Tools** - for image and video generation
-3. **GUI Settings Panel** - dedicated Agnes AI section in DSH settings
+## What it provides
 
-## Features
+| Piece | Description |
+| --- | --- |
+| **Provider** | `agnes-ai`, registered with the `llm-pi-ai` adapter (OpenAI-compatible Chat Completions) |
+| **Chat models** | `agnes-2.5-flash`, `agnes-3.0-flash`, `agnes-2.5-pro`, `agnes-2.5-pro-beta` — all accept image input |
+| **Tools** | `agnes_image_generation`, `agnes_video_generation`, `agnes_record_generation` |
+| **Settings panel** | An **Agnes AI** section in Settings listing the live configuration and the model catalogue |
 
-### LLM Provider (agnes-ai)
-- Multimodal chat with image understanding
-- Multiple models: Flash (free), Pro (paid)
-- OpenAI-compatible API (`openai-completions`)
-- Streaming responses
-- Thinking mode support
-
-### Image Generation
-- `agnes_image_generation` tool for text-to-image and image-to-image
-- Models: agnes-image-2.1-flash, agnes-image-2.5-flash
-
-### Video Generation
-- `agnes_video_generation` tool for text-to-video and first/last-frame control
-- Async task-based generation: create then poll `/agnesapi` until done
-- Models: agnes-video-2.5-flash (free for now, 720P only), agnes-video-2.5 (paid, 720P/1080P/1K/2K)
-
-### GUI Settings Panel
-- **Agnes AI button** in the DSH settings sidebar
-- Automatic detection of `agnes-ai` provider configuration
-- Shows configured models and their status
-- Guidance for new users to add the provider
-
-## Installation
+## Install
 
 ```bash
-# From GitHub (testing)
-dsh plugin --profile web add "git+https://github.com/wangyemen/agnes-ai-for-dsh.git"
-
-# From npm (after published)
-dsh plugin --profile web add agnes-ai-for-dsh
+dsh plugin install agnes-ai-for-dsh
 ```
 
-## Configuration
+Or add it to a profile's `package.json` and reinstall:
 
-### 1. Allow Build Scripts (First Time Only)
-
-The first time you install the plugin, pnpm will block build scripts for security. You need to add the package to the allowlist:
-
-Open `D:\dsh\home\profiles\web\pnpm-workspace.yaml` and add:
-
-```yaml
-allowBuilds:
-  'agnes-ai-for-dsh@https://codeload.github.com/wangyemen/agnes-ai-for-dsh/tar.gz/<commit-hash>': true
+```json
+{
+  "dependencies": {
+    "agnes-ai-for-dsh": "git+https://github.com/wangyemen/agnes-ai-for-dsh.git"
+  }
+}
 ```
 
-The exact key will be shown in the error message when pnpm blocks the build.
+Then add the bundle to `dsh.profile.bundles` and restart DSH.
 
-### 2. Add Provider (Auto or Manual)
+## Configure
 
-**Auto (via plugin):**
-The plugin automatically injects the `agnes-ai` provider configuration via `cordis.patch.yml`.
+The provider is pre-declared by `cordis.patch.yml`, so the only required step is
+the API key:
 
-**Manual:**
-Go to **Settings → Models** and add a new provider:
-- **Provider ID**: `agnes-ai`
-- **Display Name**: `Agnes AI`
-- **API**: `openai-completions`
-- **Base URL**: `https://api.agnes-ai.cn/v1` (China) or `https://apihub.agnes-ai.com/v1` (Global)
-- **Models**:
-  - `agnes-2.5-flash` (Free, multimodal)
-  - `agnes-3.0-flash` (Free, multimodal)
-  - `agnes-2.5-pro` (Paid, multimodal)
-  - `agnes-image-2.5-flash` (Free, image generation)
-  - `agnes-video-2.5-flash` (Free, video generation)
+1. Open **Settings → Models**.
+2. Find **Agnes AI** and enter your API key.
+3. The key is stored by DSH's credential system under `AGNES_AI_API_KEY`.
 
-### 3. Set API Key
+The default endpoint is the China region:
 
-**Important:** You don't need to set environment variables manually. DSH's Settings UI handles this for you.
+```
+https://api.agnes-ai.cn/v1
+```
 
-1. Go to **Settings → Models**
-2. Find **Agnes AI** in the provider list
-3. Enter your API Key in the **API Key** field
-4. Click **Save**
-
-The API key is saved securely through DSH's built-in credentials system.
-
-### 4. Using the Agnes AI Settings Panel
-
-1. Click the **Agnes AI** button in the settings sidebar
-2. If not configured, you'll see guidance to add the provider
-3. If configured, you'll see:
-   - Provider status (configured/not configured)
-   - API key status
-   - List of all available models
-   - Model categories (text/image/video)
+To use the Global endpoint, change `baseURL` to
+`https://apihub.agnes-ai.com/v1` either in `cordis.patch.yml` or directly in
+Settings → Models.
 
 ## Usage
 
-### Text Chat with Image Understanding
+Once enabled, the two media tools are available to the model:
 
-1. Select an Agnes AI model (e.g., `agnes-2.5-flash`)
-2. Upload an image in the chat
-3. Ask questions about the image
+- **`agnes_image_generation`** — text-to-image, image-to-image and multi-image
+  editing. Parameters: `model`, `prompt`, `size` (`1K`–`4K`), optional `ratio`,
+  optional `image` (input URLs), optional `return_base64`.
+- **`agnes_video_generation`** — asynchronous video generation with polling.
+  Parameters: `model`, `prompt`, optional `seconds`, `mode`, `size`,
+  `aspect_ratio`, and the mode-specific media fields.
 
-### Generate Images
+Video generation is asynchronous: the tool creates a task and then polls
+`GET /agnesapi?video_id=…&model_name=…` until it settles. `agnes-video-2.5-flash`
+accepts only `720P`; `agnes-video-2.5` accepts `720P`, `1080P`, `1K` and `2K`.
 
-The agent can use the `agnes_image_generation` tool:
-- User: "Generate an image of a sunset"
-- Agent: Calls `agnes_image_generation` tool
-- Agent: Returns the image URL
+## Notes for maintainers
 
-### Generate Videos
+### Tool schemas
 
-The agent can use the `agnes_video_generation` tool:
-- User: "Generate a video of a cat walking"
-- Agent: Calls `agnes_video_generation` tool
-- Agent: Returns the video task ID
+The host's `defineTool` does **not** accept raw JSON Schema — it requires a
+property-map DSL whose entries may carry their own `required: true`, and it
+compiles that into object-rooted JSON Schema itself.
 
-## Model Catalog
+That DSL is not valid JSON Schema. If it ever reaches a provider unconverted, the
+provider rejects the **entire request** (WorkBuddy returns HTTP 400, code 11129,
+"工具定义不合规"), so every model reply in the session fails — not merely the one
+tool. This is not hypothetical: it is exactly what happened when a bare
+`require()` threw inside an ESM module and a silent identity fallback registered
+the raw DSL.
 
-### Text Models (Multimodal)
-| Model | Price | Context | Max Output | Image Input |
-|-------|-------|---------|------------|-------------|
-| agnes-2.5-flash | Free | 512K | 64K | Yes |
-| agnes-3.0-flash | Free | 512K | 64K | Yes |
-| agnes-2.5-pro | Paid | 512K | 64K | Yes |
-| agnes-2.5-pro-beta | Paid | 512K | 64K | Yes |
+The defence is in `src/tools.ts`:
 
-### Image Models
-| Model | Price | Description |
-|-------|-------|-------------|
-| agnes-image-2.1-flash | Free | Text/Image to image |
-| agnes-image-2.5-flash | Free | Latest generation |
+- `compileParameters()` compiles the DSL here, so the plugin does not depend on
+  the host helper for correctness.
+- `assertValidCompiledSchema()` / `assertAllToolSchemas()` verify the **compiled**
+  form at load and throw on the invalid shape, so a mistake stops the plugin
+  instead of poisoning every request.
+- Registration re-checks the parameters `defineTool` actually produced and
+  refuses to register if the raw DSL survived.
 
-### Video Models
-| Model | Price | Description |
-|-------|-------|-------------|
-| agnes-video-2.5-flash | Free (limited time) | Async API, 720P only |
-| agnes-video-2.5 | Paid | Multi-resolution, first/last-frame control |
+`verify.mjs` exercises all of this against the real `defineTool`.
 
-> `agnes-video-v2.0` has been retired upstream and was removed from this plugin.
+### Build
 
-## API Documentation
+```bash
+npm install
+npm run build
+```
 
-Visit the Agnes AI platform for API docs:
-- China: https://platform.agnes-ai.cn/
-- Global: https://platform.agnes-ai.com/
+`lib/` is committed, because the package installs from git and the consuming
+profile does not run build scripts. **Rebuild before committing any `src/`
+change**, or the stale `lib/` is what ships.
 
 ## License
 
