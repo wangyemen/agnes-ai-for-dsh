@@ -723,10 +723,13 @@ export function apply(ctx: Context): void {
     console.error('[agnes-ai-for-dsh] inject callback fired')
 
     // ---- 注册 records settings namespace（settings 可选）----
+    // 同样用 ctx.reflect.get() 读取，避免 'without inject' 报错；
+    // 缺失时返回 undefined，records 功能降级但不影响启动。
     let recordsScope: any = null
     try {
-      if (!sctx.settings) throw new Error('settings service unavailable')
-      recordsScope = sctx.settings.register(AGNES_RECORDS_NS, RecordsSchema)
+      const settings: any = sctx.reflect?.get?.('settings', false) ?? null
+      if (!settings) throw new Error('settings service unavailable')
+      recordsScope = settings.register(AGNES_RECORDS_NS, RecordsSchema)
       // eslint-disable-next-line no-console
       console.error('[agnes-ai-for-dsh] register OK')
     } catch (err) {

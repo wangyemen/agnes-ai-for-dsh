@@ -567,10 +567,18 @@ moduleLoader.load({
       console.log('[agnes-ai-for-dsh-client] apply() invoked')
 
       // settingsScope 是可选服务：部分 runtime / profile（如桌面版 0.2.0-rc.2）
-      // 并不提供它。若放进 inject 会变成必需依赖，插件永远 pending，
-      // 进而让整个 boot 判定 "entry did not activate" 而失败。
-      // 因此这里改为运行时探测，缺失时降级而不是卡死。
-      const settingsScope: any = (ctx as any).settingsScope ?? null
+      // 并不提供它。
+      // - 放进 inject 会变成必需依赖 → 插件永远 pending → 整个 boot 失败；
+      // - 完全不声明却直接读 ctx.settingsScope → 抛
+      //   'cannot get property "settingsScope" without inject'。
+      // 正确做法：用 ctx.reflect.get() 读取，它不要求 inject，
+      // 服务缺失时返回 undefined，从而安全降级。
+      let settingsScope: any = null
+      try {
+        settingsScope = (ctx as any).reflect?.get?.('settingsScope', false) ?? null
+      } catch {
+        settingsScope = null
+      }
 
       // 绑定到 llm-pi-ai 命名空间
       let scope: any = null
