@@ -566,33 +566,100 @@ moduleLoader.load({
       // eslint-disable-next-line no-console
       console.log('[agnes-ai-for-dsh-client] apply() invoked')
 
-      // settingsScope 是可选服务：部分 runtime / profile（如桌面版 0.2.0-rc.2）
-      // 并不提供它。
-      // - 放进 inject 会变成必需依赖 → 插件永远 pending → 整个 boot 失败；
-      // - 完全不声明却直接读 ctx.settingsScope → 抛
-      //   'cannot get property "settingsScope" without inject'。
-      // 正确做法：用 ctx.reflect.get() 读取，它不要求 inject，
-      // 服务缺失时返回 undefined，从而安全降级。
-      let settingsScope: any = null
-      try {
-        settingsScope = (ctx as any).reflect?.get?.('settingsScope', false) ?? null
-      } catch {
-        settingsScope = null
+      // ------------------------------------------------------------------
+      // Settings access
+      //
+      // DSH 0.2.0-rc.2 不提供 `settingsScope` 服务（Host / Client 两侧都没有），
+      // 旧写法读它恒为 undefined → scope 恒为 null → readAgnesConfig() 恒返回
+      // null → 面板永远显示「尚未检测到 Agnes AI 配置」，即使 provider 明明活着。
+      //
+      // 该 runtime 支持的 Client 面是生成的 Remote 命名空间 ctx.remote.settings，
+      // 其 describe() 返回每个已注册 namespace 的实时值（secret 字段已脱敏）。
+      //
+      // 两条面都用 ctx.reflect.get() 读取：它不要求 inject，服务缺失时返回
+      // undefined 而不是让整个插件 pending。
+      // ------------------------------------------------------------------
+
+      /** pi-ai 适配器注册的 settings namespace（其 loader entry id）。 */
+      const LLM_PI_AI_NS = 'llm-pi-ai'
+
+      function getRemote(): any {
+        try {
+          return (ctx as any).reflect?.get?.('remote', false) ?? null
+        } catch {
+          return null
+        }
       }
 
-      // 绑定到 llm-pi-ai 命名空间
-      let scope: any = null
-      try {
-        if (!settingsScope) throw new Error('settingsScope service unavailable')
-        scope = settingsScope.bind({ namespace: 'llm-pi-ai' })
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn('[agnes-ai-for-dsh-client] settingsScope.bind(llm-pi-ai) unavailable:', error)
+      /**
+       * 取 ctx.remote.settings 命名空间服务。
+       *
+       * Remote 命名空间是以「扁平名字」注册的（`remoteServiceKey()` 返回
+       * `remote.<ns>`），所以 `remote.settings` 本身就是一个独立服务名。
+       * 两种读法都试，避免依赖嵌套属性一定可达。
+       */
+      function getRemoteSettings(): any {
+        try {
+          const flat = (ctx as any).reflect?.get?.('remote.settings', false)
+          if (flat) return flat
+        } catch {
+          /* fall through */
+        }
+        return getRemote()?.settings ?? null
       }
 
-      // 绑定到 agnes-generations 命名空间（记录）
+      /** 从某个 namespace 的实时值里取出 agnes-ai provider 配置。 */
+      function agnesProfileOf(value: any): any {
+        const provider = value?.providers?.['agnes-ai']
+        return provider && typeof provider === 'object' ? provider : null
+      }
+
+      /**
+       * 解析实时的 agnes-ai provider 配置。
+       * @returns provider 配置与其所属 namespace；两面都读不到时返回 null。
+       */
+      async function readAgnesConfig(): Promise<{ config: any; ns: string | null } | null> {
+        // 首选：Remote settings 面（0.2.0-rc.2+）。
+        const settingsApi = getRemoteSettings()
+        if (settingsApi && typeof settingsApi.describe === 'function') {
+          try {
+            const result = await settingsApi.describe()
+            const view = result && result.ok === true ? result.value : null
+            const namespaces: any[] = Array.isArray(view?.namespaces) ? view.namespaces : []
+            // pi-ai 适配器只拥有一个 namespace；优先按名字命中，再退化为
+            // 「哪个 namespace 真的声明了 agnes-ai」。
+            const exact = namespaces.find((row) => row?.ns === LLM_PI_AI_NS)
+            const fromExact = agnesProfileOf(exact?.value)
+            if (fromExact) return { config: fromExact, ns: String(exact.ns) }
+            for (const row of namespaces) {
+              const hit = agnesProfileOf(row?.value)
+              if (hit) return { config: hit, ns: String(row?.ns ?? '') }
+            }
+            return null
+          } catch (error) {
+            // eslint-disable-next-line no-console
+            console.warn('[agnes-ai-for-dsh-client] remote.settings.describe failed:', error)
+          }
+        }
+
+        // 兼容面：仅保留给确实提供 settingsScope 的 runtime。
+        try {
+          const settingsScope: any = (ctx as any).reflect?.get?.('settingsScope', false) ?? null
+          if (!settingsScope) return null
+          const scope = settingsScope.bind({ namespace: LLM_PI_AI_NS })
+          const snapshot = scope.getSnapshot()
+          if (!snapshot || snapshot.status !== 'ready') return null
+          const hit = agnesProfileOf(snapshot.value)
+          return hit ? { config: hit, ns: LLM_PI_AI_NS } : null
+        } catch {
+          return null
+        }
+      }
+
+      // 绑定到 agnes-generations 命名空间（记录）——旧 face，缺失时安全降级。
       let recordsScope: any = null
       try {
+        const settingsScope: any = (ctx as any).reflect?.get?.('settingsScope', false) ?? null
         if (!settingsScope) throw new Error('settingsScope service unavailable')
         recordsScope = settingsScope.bind({ namespace: 'agnes-generations' })
       } catch (error) {
@@ -600,51 +667,89 @@ moduleLoader.load({
         console.warn('[agnes-ai-for-dsh-client] settingsScope.bind(agnes-generations) unavailable:', error)
       }
 
-      function readAgnesConfig(): any {
-        if (!scope) return null
-        try {
-          const snapshot = scope.getSnapshot()
-          // eslint-disable-next-line no-console
-          console.log('[agnes-ai-for-dsh-client] snapshot:', snapshot)
-          if (!snapshot || snapshot.status !== 'ready') return null
-          const v = snapshot.value
-          if (!v) return null
-          const providers = (v as any).providers
-          return providers?.['agnes-ai'] ?? null
-        } catch (error) {
-          // eslint-disable-next-line no-console
-          console.error('[agnes-ai-for-dsh-client] read scope failed:', error)
-          return null
-        }
-      }
-
       function AgnesPanel(_props: any) {
         if (!React) {
           return jsx('div', { style: { padding: 16 }, children: 'React unavailable' })
         }
 
-        const [config, setConfig] = React.useState(readAgnesConfig)
+        // state.status: 'loading' 时不能断言「未配置」——读取是异步的，
+        // 抢跑会让已配置的用户先看到一次误导提示。
+        const [state, setState] = React.useState({ status: 'loading', config: null, ns: null } as {
+          status: 'loading' | 'ready' | 'missing'
+          config: any
+          ns: string | null
+        })
+
+        // 让同一轮里的并发读取只有最后一次能落地。
+        const requestRef = React.useRef(0)
 
         React.useEffect(() => {
-          if (!scope) return
-          const handler = () => setConfig(readAgnesConfig())
-          let dispose: any
+          let alive = true
+          const load = () => {
+            const ticket = ++requestRef.current
+            readAgnesConfig()
+              .then((hit) => {
+                if (!alive || ticket !== requestRef.current) return
+                setState(
+                  hit
+                    ? { status: 'ready', config: hit.config, ns: hit.ns }
+                    : { status: 'missing', config: null, ns: null },
+                )
+              })
+              .catch(() => {
+                if (!alive || ticket !== requestRef.current) return
+                setState({ status: 'missing', config: null, ns: null })
+              })
+          }
+
+          load()
+
+          // settings 写盘与重连都会让远端值失效，重新读一次。
+          const disposers: any[] = []
+          const remote = getRemote()
           try {
-            if (typeof scope.subscribe === 'function') {
-              dispose = scope.subscribe(handler)
+            if (typeof remote?.$on === 'function') {
+              disposers.push(remote.$on('settings/document-updated', load))
             }
           } catch (error) {
             // eslint-disable-next-line no-console
-            console.error('[agnes-ai-for-dsh-client] subscribe failed:', error)
+            console.warn('[agnes-ai-for-dsh-client] settings invalidation subscribe failed:', error)
           }
+          try {
+            if (typeof (ctx as any).on === 'function') {
+              disposers.push((ctx as any).on('connection/reset', load))
+            }
+          } catch {
+            /* ignore */
+          }
+
           return () => {
-            try {
-              if (typeof dispose === 'function') dispose()
-            } catch {
-              /* ignore */
+            alive = false
+            for (const dispose of disposers) {
+              try {
+                if (typeof dispose === 'function') dispose()
+              } catch {
+                /* ignore */
+              }
             }
           }
         }, [])
+
+        // ---- 读取中：保持沉默，不做任何断言 ----
+        if (state.status === 'loading') {
+          return jsxs('div', {
+            style: { padding: 20, fontFamily: C.font, color: C.textPrimary },
+            children: [
+              jsx('span', { style: { fontSize: 16, fontWeight: 700 }, children: 'Agnes AI' }),
+              jsx('div', {
+                style: { marginTop: 8, fontSize: 12, color: C.textMuted },
+                children: '正在读取配置…',
+              }),
+            ],
+          })
+        }
+
+        const config = state.config
 
         // ---- 未配置 provider 时的引导页 ----
         if (!config) {
