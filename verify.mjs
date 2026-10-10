@@ -12,6 +12,33 @@
  */
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
+import { readFileSync } from 'node:fs'
+
+// ---------------------------------------------------------------------------
+// 0. Packaging checks
+//
+// A UTF-8 BOM on package.json makes pnpm fail with
+// `Unexpected token '﻿', "﻿{" ... is not valid JSON`, which surfaces as an
+// install failure rather than a code error — so it is checked here.
+// ---------------------------------------------------------------------------
+console.log('=== packaging ===')
+for (const file of ['package.json', '.gitignore', 'tsconfig.json']) {
+  const bytes = readFileSync(file)
+  const hasBom = bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf
+  console.log(`  ${file.padEnd(16)} BOM=${hasBom}`)
+  if (hasBom) {
+    failed++
+    console.log(`  FAIL: ${file} must not start with a UTF-8 BOM`)
+  }
+}
+// package.json must parse.
+try {
+  JSON.parse(readFileSync('package.json', 'utf8'))
+  console.log('  package.json parses: true')
+} catch (e) {
+  failed++
+  console.log('  FAIL: package.json does not parse:', e.message)
+}
 
 const require = createRequire(import.meta.url)
 const plugin = await import('./lib/index.js')
