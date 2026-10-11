@@ -19,6 +19,24 @@ import { type AgnesRegion } from './types.js';
 export declare const name = "agnes-ai-for-dsh";
 /** Settings namespace holding the generation history. */
 export declare const AGNES_RECORDS_NS = "agnes-generations";
+/**
+ * Build a tool result containing only defined values.
+ *
+ * A tool's return value must be lossless JSON. An `undefined` property is NOT
+ * lossless: the registry snapshots the value with `snapshotJsonValue`, which
+ * rejects the whole object, and the call fails with
+ * `tool "<name>" returned invalid output: value is not lossless JSON`.
+ *
+ * That makes the natural spelling `return { url: result.url, base64: result.base64 }`
+ * a bug whenever either field is absent — which is the normal case, since a
+ * result is a URL or base64 data, never both.
+ *
+ * Every tool result therefore goes through this helper, so no future edit can
+ * reintroduce an `undefined` by spreading optional fields into a literal.
+ *
+ * Exported so `verify-output.mjs` can test it directly.
+ */
+export declare function toolResult<T extends Record<string, unknown>>(fields: T): Record<string, unknown>;
 export interface GenerationRecord {
     id: string;
     type: 'image' | 'video';

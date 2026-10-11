@@ -57,6 +57,31 @@ interface ToolResult {
   error?: string
 }
 
+/**
+ * Build a tool result containing only defined values.
+ *
+ * A tool's return value must be lossless JSON. An `undefined` property is NOT
+ * lossless: the registry snapshots the value with `snapshotJsonValue`, which
+ * rejects the whole object, and the call fails with
+ * `tool "<name>" returned invalid output: value is not lossless JSON`.
+ *
+ * That makes the natural spelling `return { url: result.url, base64: result.base64 }`
+ * a bug whenever either field is absent — which is the normal case, since a
+ * result is a URL or base64 data, never both.
+ *
+ * Every tool result therefore goes through this helper, so no future edit can
+ * reintroduce an `undefined` by spreading optional fields into a literal.
+ *
+ * Exported so `verify-output.mjs` can test it directly.
+ */
+export function toolResult<T extends Record<string, unknown>>(fields: T): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== undefined) out[key] = value
+  }
+  return out
+}
+
 function renderMediaResult(_args: unknown, value: ToolResult): Array<{ type: 'text'; text: string }> {
   if (value?.error) return [{ type: 'text', text: `Agnes error: ${value.error}` }]
   if (value?.url) return [{ type: 'text', text: `Result URL: ${value.url}` }]
@@ -325,7 +350,7 @@ export function apply(ctx: Context): void {
             output: { schema: MEDIA_OUTPUT_SCHEMA, render: renderMediaResult },
             execute: async (args: Record<string, unknown>) => {
               const config = await clientConfig()
-              if ('error' in config) return { error: config.error }
+              if ('error' in config) return toolResult({ error: config.error })
 
               const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
               await addRecord({
@@ -354,14 +379,16 @@ export function apply(ctx: Context): void {
 
               if (result.error) {
                 await patchRecord(id, { status: 'failed', error: result.error })
-                return { error: result.error }
+                return toolResult({ error: result.error })
               }
               await patchRecord(id, {
                 status: 'completed',
                 url: result.url,
                 completedAt: Date.now(),
               })
-              return { url: result.url, base64: result.base64 }
+              // Exactly one of url / base64 is present; toolResult drops the other
+              // so the value stays lossless JSON.
+              return toolResult({ url: result.url, base64: result.base64 })
             },
           }),
         )
@@ -379,7 +406,7 @@ export function apply(ctx: Context): void {
             output: { schema: MEDIA_OUTPUT_SCHEMA, render: renderMediaResult },
             execute: async (args: Record<string, unknown>) => {
               const config = await clientConfig()
-              if ('error' in config) return { error: config.error }
+              if ('error' in config) return toolResult({ error: config.error })
 
               const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
               await addRecord({
@@ -416,14 +443,14 @@ export function apply(ctx: Context): void {
 
               if (result.error) {
                 await patchRecord(id, { status: 'failed', error: result.error })
-                return { error: result.error }
+                return toolResult({ error: result.error })
               }
               await patchRecord(id, {
                 status: 'completed',
                 url: result.url,
                 completedAt: Date.now(),
               })
-              return { url: result.url }
+              return toolResult({ url: result.url })
             },
           }),
         )
@@ -455,7 +482,7 @@ export function apply(ctx: Context): void {
                 completedAt: Date.now(),
                 source: AGNES_RECORD_TOOL.name,
               })
-              return { ok: true, id }
+              return toolResult({ ok: true, id })
             },
           }),
         )
